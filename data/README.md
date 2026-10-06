@@ -13,6 +13,8 @@ Fuente única: `esquema.py`. De ahí salen el DDL de Access, el `schema.ini`, el
 | `generar_schema_pg.py` | Genera `schema.sql` (Postgres, esquema `lanops`) desde `esquema.py`: mismos nombres, reglas → CHECK, descripciones → COMMENT |
 | `schema.sql` | Las 13 tablas en Postgres. Se ejecuta una vez con el usuario `marcos` (dueño del esquema `lanops`) |
 | `semilla-lanbide.sql` | La empresa comodín `(Lanbide, sin identificar)` (id 61) que necesita `LANOPS-LANBIDE` |
+| `generar_datos_pg.py` | Genera `datos-sinteticos-personas.sql` desde `lanops_csv/` |
+| `datos-sinteticos-personas.sql` | Carga en Postgres solo las tablas de personas (configuracion, entidades, habilidades, evaluadores, usuarios, usuario_habilidad, preferencias, verificaciones). Sin vacantes, evaluaciones, feedback, certificados ni empresas sintéticas: las vacantes de Postgres son las reales de Lanbide |
 
 Regenerar todo: `python generar_csv.py && python validar.py && python generar_vba.py && python er.py && neato -Tpng -Gdpi=130 er.dot -o ../docs/LANOPS_ER.png`
 
