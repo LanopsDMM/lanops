@@ -1,8 +1,3 @@
--- n8n · workflow LANOPS-LANBIDE · nodo "Postgres: upsert vacantes"
--- Operación: Execute Query · Settings del nodo: Execute Once = ON
--- Query Parameters (una sola expresión):
---   {{ [ JSON.stringify($input.all().map(i => i.json)) ] }}
--- $1 = array JSON con las vacantes que deja "Code: filtrar".
 WITH filas AS (
   SELECT r.*
   FROM jsonb_to_recordset($1::jsonb) AS r(

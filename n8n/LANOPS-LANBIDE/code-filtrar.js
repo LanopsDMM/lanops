@@ -9,9 +9,15 @@
 const PROVINCIA = 'GIPUZKOA';
 const LINEA_DISC = 'Oferta reservada a personas con discapacidad.';
 
-// 1. Leer y decodificar latin1
+// 1. Leer y decodificar. [06-oct] web.lanbide.eus lo sirve como application/jsonp:
+//    se acepta UTF-8 o latin1 y se quita un posible envoltorio callback(...).
 const buf = await this.helpers.getBinaryDataBuffer(0, 'data');
-const ofertas = JSON.parse(buf.toString('latin1'));
+let txt;
+try { txt = new TextDecoder('utf-8', { fatal: true }).decode(buf); }
+catch (e) { txt = buf.toString('latin1'); }   // no es UTF-8 válido -> ISO-8859-1
+const ini = txt.indexOf('['), fin = txt.lastIndexOf(']');
+if (ini < 0 || fin < ini) throw new Error('Lanbide: no se encuentra el array de ofertas');
+const ofertas = JSON.parse(txt.slice(ini, fin + 1));
 if (!Array.isArray(ofertas)) throw new Error('Lanbide: se esperaba un array en la raíz');
 
 // 2. Utilidades
