@@ -1,0 +1,124 @@
+id;usuario;entidad;tipo;fecha;estado;verificado_por
+1;3;2;aval;06/06/2026;aprobada;Técnica EKINN
+2;4;5;aval;08/06/2026;aprobada;Lanbide - Lehen Aukera
+3;7;2;aval;14/06/2026;pendiente;
+4;9;2;documental;16/06/2026;aprobada;Técnica EKINN
+5;11;1;email_institucional;18/06/2026;aprobada;sistema
+6;12;2;aval;18/06/2026;pendiente;
+7;15;2;aval;15/06/2026;aprobada;Técnica EKINN
+8;16;1;email_institucional;21/06/2026;aprobada;sistema
+9;17;2;documental;19/06/2026;aprobada;Técnica EKINN
+10;18;2;aval;23/06/2026;pendiente;
+11;19;5;aval;22/06/2026;aprobada;Lanbide - Lehen Aukera
+12;23;1;documental;18/06/2026;aprobada;Oficina de carrera Tecnun
+13;24;3;documental;18/06/2026;rechazada;Equipo LANOPS
+14;24;3;aval;30/06/2026;aprobada;Cruz Roja - Empleo
+15;25;4;documental;22/06/2026;pendiente;
+16;27;3;aval;19/06/2026;revocada;Cruz Roja - Empleo
+17;28;1;email_institucional;25/06/2026;pendiente;
+18;30;1;email_institucional;23/06/2026;aprobada;sistema
+19;32;5;aval;22/06/2026;aprobada;Lanbide - Lehen Aukera
+20;33;2;documental;30/06/2026;pendiente;
+21;34;5;documental;25/06/2026;pendiente;
+22;36;1;email_institucional;01/07/2026;aprobada;sistema
+23;38;4;documental;27/06/2026;rechazada;Equipo LANOPS
+24;38;4;aval;03/07/2026;aprobada;Cáritas - Inserción
+25;40;3;documental;28/06/2026;rechazada;Equipo LANOPS
+26;40;3;aval;11/07/2026;aprobada;Cruz Roja - Empleo
+27;41;2;documental;29/06/2026;rechazada;Equipo LANOPS
+28;41;2;aval;10/07/2026;aprobada;Técnica EKINN
+29;42;4;aval;09/07/2026;aprobada;Cáritas - Inserción
+30;44;4;aval;07/07/2026;aprobada;Cáritas - Inserción
+31;46;1;email_institucional;11/07/2026;revocada;sistema
+32;49;1;email_institucional;07/07/2026;aprobada;sistema
+33;50;1;email_institucional;06/07/2026;pendiente;
+34;52;1;email_institucional;14/07/2026;pendiente;
+35;54;1;documental;13/07/2026;aprobada;Oficina de carrera Tecnun
+36;55;4;aval;15/07/2026;aprobada;Cáritas - Inserción
+37;56;4;aval;11/07/2026;aprobada;Cáritas - Inserción
+38;57;1;email_institucional;15/07/2026;aprobada;sistema
+39;60;1;documental;16/07/2026;aprobada;Oficina de carrera Tecnun
+40;61;3;documental;11/07/2026;rechazada;Equipo LANOPS
+41;61;3;aval;20/07/2026;aprobada;Cruz Roja - Empleo
+42;64;3;aval;20/07/2026;aprobada;Cruz Roja - Empleo
+43;65;4;documental;23/07/2026;pendiente;
+44;67;5;aval;13/07/2026;aprobada;Lanbide - Lehen Aukera
+45;69;5;documental;13/07/2026;rechazada;Equipo LANOPS
+46;69;5;aval;21/07/2026;aprobada;Lanbide - Lehen Aukera
+47;70;1;email_institucional;14/07/2026;aprobada;sistema
+48;71;5;aval;16/07/2026;aprobada;Lanbide - Lehen Aukera
+49;72;1;email_institucional;20/07/2026;aprobada;sistema
+50;73;1;email_institucional;21/07/2026;pendiente;
+51;74;1;email_institucional;22/07/2026;pendiente;
+52;75;1;email_institucional;15/07/2026;pendiente;
+53;77;2;aval;25/07/2026;aprobada;Técnica EKINN
+54;78;2;documental;26/07/2026;aprobada;Técnica EKINN
+55;79;2;documental;19/07/2026;aprobada;Técnica EKINN
+56;80;2;aval;18/07/2026;aprobada;Técnica EKINN
+57;82;1;email_institucional;20/07/2026;aprobada;sistema
+58;83;1;email_institucional;24/07/2026;pendiente;
+59;86;2;aval;26/07/2026;revocada;Técnica EKINN
+60;87;3;aval;30/07/2026;aprobada;Cruz Roja - Empleo
+61;88;2;documental;01/08/2026;revocada;Técnica EKINN
+62;89;4;documental;27/07/2026;aprobada;Cáritas - Inserción
+63;90;5;documental;25/07/2026;aprobada;Lanbide - Lehen Aukera
+64;91;4;documental;02/08/2026;aprobada;Cáritas - Inserción
+65;94;1;documental;28/07/2026;aprobada;Oficina de carrera Tecnun
+66;99;5;documental;31/07/2026;aprobada;Lanbide - Lehen Aukera
+67;102;5;aval;06/08/2026;revocada;Lanbide - Lehen Aukera
+68;103;2;aval;04/08/2026;aprobada;Técnica EKINN
+69;109;5;aval;04/08/2026;aprobada;Lanbide - Lehen Aukera
+70;110;4;aval;09/08/2026;aprobada;Cáritas - Inserción
+71;111;2;aval;15/08/2026;aprobada;Técnica EKINN
+72;115;3;aval;09/08/2026;pendiente;
+73;116;1;documental;15/08/2026;pendiente;
+74;117;2;documental;16/08/2026;revocada;Técnica EKINN
+75;118;1;email_institucional;11/08/2026;aprobada;sistema
+76;119;3;documental;12/08/2026;aprobada;Cruz Roja - Empleo
+77;120;2;aval;17/08/2026;aprobada;Técnica EKINN
+78;122;2;aval;16/08/2026;aprobada;Técnica EKINN
+79;123;5;aval;13/08/2026;pendiente;
+80;125;1;documental;12/08/2026;rechazada;Equipo LANOPS
+81;125;1;aval;28/08/2026;aprobada;Oficina de carrera Tecnun
+82;126;2;aval;22/08/2026;aprobada;Técnica EKINN
+83;127;5;aval;20/08/2026;pendiente;
+84;131;1;email_institucional;17/08/2026;pendiente;
+85;132;5;aval;20/08/2026;aprobada;Lanbide - Lehen Aukera
+86;133;1;email_institucional;21/08/2026;aprobada;sistema
+87;135;2;documental;22/08/2026;aprobada;Técnica EKINN
+88;136;3;aval;27/08/2026;aprobada;Cruz Roja - Empleo
+89;137;1;email_institucional;27/08/2026;pendiente;
+90;138;1;email_institucional;26/08/2026;aprobada;sistema
+91;140;2;documental;26/08/2026;aprobada;Técnica EKINN
+92;141;1;documental;01/09/2026;aprobada;Oficina de carrera Tecnun
+93;142;2;documental;29/08/2026;revocada;Técnica EKINN
+94;144;1;email_institucional;24/08/2026;revocada;sistema
+95;145;5;documental;02/09/2026;aprobada;Lanbide - Lehen Aukera
+96;147;1;documental;02/09/2026;aprobada;Oficina de carrera Tecnun
+97;149;4;documental;26/08/2026;pendiente;
+98;150;1;documental;03/09/2026;aprobada;Oficina de carrera Tecnun
+99;151;1;email_institucional;30/08/2026;pendiente;
+100;152;2;documental;03/09/2026;aprobada;Técnica EKINN
+101;154;5;aval;02/09/2026;aprobada;Lanbide - Lehen Aukera
+102;155;1;email_institucional;04/09/2026;aprobada;sistema
+103;158;1;documental;08/09/2026;pendiente;
+104;163;1;email_institucional;06/09/2026;aprobada;sistema
+105;164;2;documental;09/09/2026;aprobada;Técnica EKINN
+106;165;1;documental;15/09/2026;aprobada;Oficina de carrera Tecnun
+107;166;3;documental;09/09/2026;pendiente;
+108;167;5;aval;07/09/2026;aprobada;Lanbide - Lehen Aukera
+109;171;5;aval;16/09/2026;aprobada;Lanbide - Lehen Aukera
+110;173;2;aval;11/09/2026;aprobada;Técnica EKINN
+111;174;1;email_institucional;13/09/2026;revocada;sistema
+112;179;1;email_institucional;20/09/2026;aprobada;sistema
+113;181;2;documental;13/09/2026;rechazada;Equipo LANOPS
+114;181;2;aval;24/09/2026;aprobada;Técnica EKINN
+115;182;5;aval;15/09/2026;aprobada;Lanbide - Lehen Aukera
+116;184;3;aval;17/09/2026;pendiente;
+117;185;1;email_institucional;15/09/2026;aprobada;sistema
+118;186;4;documental;20/09/2026;aprobada;Cáritas - Inserción
+119;188;1;email_institucional;18/09/2026;aprobada;sistema
+120;189;3;aval;21/09/2026;aprobada;Cruz Roja - Empleo
+121;194;1;email_institucional;24/09/2026;aprobada;sistema
+122;196;2;aval;21/09/2026;aprobada;Técnica EKINN
+123;198;3;aval;23/09/2026;revocada;Cruz Roja - Empleo

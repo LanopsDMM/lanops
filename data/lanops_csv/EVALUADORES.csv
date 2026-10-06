@@ -1,0 +1,6 @@
+id;nombre;tipo;version_rubrica;modelo;prompt;activo;fecha_alta
+1;Motor LANOPS IA;ia;oferta-2026-09;claude (versión congelada el día 8);modes/_shared.md + modes/oferta.md del fork LanopsDMM/motor, congelados el 08/09/2026;-1;08/09/2026
+2;Motor LANOPS IA (previo);ia;oferta-2026-08;claude (versión anterior);Versión anterior a la congelación del día 8;0;20/08/2026
+3;Comité de admisión Tecnun;humano;manual-tecnun-v1;;Revisión manual de casos puntuales para comparar con el motor;-1;01/07/2026
+4;Oficina de carrera;humano;manual-oc-v1;;Revisión manual de casos derivados para comparar con el motor;-1;01/07/2026
+5;Motor LANOPS IA (piloto);ia;oferta-2026-07-piloto;claude (piloto interno);Versión de piloto interno, descartada;0;15/07/2026

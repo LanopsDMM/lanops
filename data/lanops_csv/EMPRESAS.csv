@@ -1,0 +1,62 @@
+id;nombre;sector;ciudad;anillo;tamano;url_web;url_empleo;tipo_lectura;ultima_lectura;fallos_seguidos;activa
+1;Hotel Iturriaga;hosteleria;Azpeitia;1;mediana;https://www.hoteliturriaga.example;https://www.hoteliturriaga.example/empleo;ats;21/09/2026;0;-1
+2;Suministros Irazabal;comercio;Donostia;1;pequeña;https://www.suministrosirazabal.example;https://www.suministrosirazabal.example/empleo/ofertas.pdf;pdf;;0;-1
+3;Troqueles Etxeberria;industria;Hondarribia;1;pequeña;https://www.troquelesetxeberria.example;;ninguna;;0;-1
+4;Sistemas Ibarguren;tecnologia;Donostia;1;grande;https://www.sistemasibarguren.example;;ninguna;;0;-1
+5;Restaurante Arregi;hosteleria;Arrasate;1;grande;https://www.restaurantearregi.example;;ninguna;;0;-1
+6;Mecanizados Aizpurua S. Coop.;industria;Donostia;1;grande;https://www.mecanizadosaizpurua.example;https://www.mecanizadosaizpurua.example/empleo;jsonld;22/09/2026;0;-1
+7;Software Urrutia S. Coop.;tecnologia;Tolosa;1;mediana;https://www.softwareurrutia.example;;ninguna;;0;-1
+8;Consultoría Sarasola;consultoria;Madrid;2;micro;https://www.consultoriasarasola.example;https://www.consultoriasarasola.example/empleo;manual;;0;-1
+9;Asesoría Ugarte;finanzas;Zumarraga;1;grande;https://www.asesoriaugarte.example;;ninguna;;0;-1
+10;Fundiciones Etxeberria;industria;Donostia;1;mediana;https://www.fundicionesetxeberria.example;https://www.fundicionesetxeberria.example/empleo;ats;19/09/2026;0;-1
+11;Consultoría Uranga;consultoria;Azpeitia;1;mediana;https://www.consultoriauranga.example;https://www.consultoriauranga.example/empleo;manual;;0;-1
+12;Sistemas Lasa S. Coop.;tecnologia;Donostia;1;micro;https://www.sistemaslasa.example;https://www.sistemaslasa.example/empleo;html;18/09/2026;0;-1
+13;Estructuras Azkue;construccion;Andoain;1;micro;https://www.estructurasazkue.example;;ninguna;;0;-1
+14;Logística Iturriaga;logistica;Eibar;1;pequeña;https://www.logisticaiturriaga.example;https://www.logisticaiturriaga.example/empleo;html;18/09/2026;3;-1
+15;Hotel Beristain;hosteleria;Donostia;1;mediana;https://www.hotelberistain.example;https://www.hotelberistain.example/empleo;jsonld;22/09/2026;0;-1
+16;Estructuras Zabaleta;construccion;Hernani;1;mediana;https://www.estructuraszabaleta.example;https://www.estructuraszabaleta.example/empleo;ats;23/09/2026;0;-1
+17;Troqueles Otegi S. Coop.;industria;Hondarribia;1;micro;https://www.troquelesotegi.example;;ninguna;;0;-1
+18;Comercial Irazabal;comercio;Tolosa;1;mediana;https://www.comercialirazabal.example;https://www.comercialirazabal.example/empleo;ats;21/09/2026;0;-1
+19;Transportes Urrutia;logistica;Donostia;1;grande;https://www.transportesurrutia.example;;ninguna;;0;-1
+20;Construcciones Agirre;construccion;Donostia;1;pequeña;https://www.construccionesagirre.example;;ninguna;;0;-1
+21;Mecanizados Elizondo S. Coop.;industria;Eibar;1;grande;https://www.mecanizadoselizondo.example;;ninguna;;0;-1
+22;Troqueles Garmendia;industria;Irun;1;pequeña;https://www.troquelesgarmendia.example;https://www.troquelesgarmendia.example/empleo;jsonld;21/09/2026;3;-1
+23;Laboratorios Mendizabal;salud;Donostia;1;grande;https://www.laboratoriosmendizabal.example;https://www.laboratoriosmendizabal.example/empleo;jsonld;18/09/2026;0;-1
+24;Logística Olano;logistica;Beasain;1;mediana;https://www.logisticaolano.example;https://www.logisticaolano.example/empleo;html;24/09/2026;0;-1
+25;Construcciones Elizondo;construccion;Irun;1;mediana;https://www.construccioneselizondo.example;https://www.construccioneselizondo.example/empleo;html;23/09/2026;0;-1
+26;Sistemas Mendizabal;tecnologia;Irun;1;mediana;https://www.sistemasmendizabal.example;;ninguna;;0;-1
+27;Construcciones Beristain S. Coop.;construccion;Donostia;1;micro;https://www.construccionesberistain.example;https://www.construccionesberistain.example/empleo;html;22/09/2026;0;-1
+28;Suministros Mendizabal;comercio;Madrid;2;micro;https://www.suministrosmendizabal.example;;ninguna;;0;0
+29;Talleres Elizondo;industria;Donostia;1;micro;https://www.tallereselizondo.example;https://www.tallereselizondo.example/empleo;html;23/09/2026;0;-1
+30;Fundiciones Larrañaga;industria;Donostia;1;grande;https://www.fundicioneslarranaga.example;;ninguna;;0;-1
+31;Mecanizados Larrañaga S. Coop.;industria;Donostia;1;grande;https://www.mecanizadoslarranaga.example;https://www.mecanizadoslarranaga.example/empleo;html;24/09/2026;0;-1
+32;Fundiciones Olano;industria;Barcelona;3;micro;https://www.fundicionesolano.example;;ninguna;;0;-1
+33;Academia Arregi;educacion;Madrid;2;micro;https://www.academiaarregi.example;;ninguna;;0;-1
+34;Suministros Iturriaga;comercio;Hernani;1;mediana;https://www.suministrositurriaga.example;;ninguna;;0;-1
+35;Clínica Lasa;salud;Donostia;1;pequeña;https://www.clinicalasa.example;;ninguna;;0;-1
+36;Consultoría Echave;consultoria;Zarautz;1;pequeña;https://www.consultoriaechave.example;https://www.consultoriaechave.example/empleo;ats;20/09/2026;0;-1
+37;Laboratorios Otegi;salud;Eibar;1;micro;https://www.laboratoriosotegi.example;;ninguna;;0;-1
+38;Logística Garmendia;logistica;Andoain;1;grande;https://www.logisticagarmendia.example;;ninguna;;0;-1
+39;Centro de formación Olano;educacion;Pamplona;3;mediana;https://www.centrodeformacionolano.example;https://www.centrodeformacionolano.example/empleo;jsonld;18/09/2026;0;-1
+40;Fundiciones Zubizarreta;industria;Bergara;1;micro;https://www.fundicioneszubizarreta.example;;ninguna;;0;-1
+41;Restaurante Mendizabal S. Coop.;hosteleria;Zarautz;1;mediana;https://www.restaurantemendizabal.example;https://www.restaurantemendizabal.example/empleo/ofertas.pdf;pdf;;0;-1
+42;Fundiciones Arregi;industria;Donostia;1;pequeña;https://www.fundicionesarregi.example;;ninguna;;0;-1
+43;Logística Aizpurua;logistica;Tolosa;1;micro;https://www.logisticaaizpurua.example;https://www.logisticaaizpurua.example/empleo;ats;24/09/2026;0;-1
+44;Sistemas Echave;tecnologia;Arrasate;1;mediana;https://www.sistemasechave.example;;ninguna;;0;-1
+45;Gestoría Urrutia S. Coop.;finanzas;Donostia;1;mediana;https://www.gestoriaurrutia.example;;ninguna;;0;-1
+46;Software Larrañaga;tecnologia;Donostia;1;mediana;https://www.softwarelarranaga.example;https://www.softwarelarranaga.example/empleo;ats;23/09/2026;0;-1
+47;Comercial Goikoetxea S. Coop.;comercio;Oñati;1;mediana;https://www.comercialgoikoetxea.example;https://www.comercialgoikoetxea.example/empleo;ats;24/09/2026;0;-1
+48;Hotel Otegi;hosteleria;Donostia;1;pequeña;https://www.hotelotegi.example;https://www.hotelotegi.example/empleo;html;19/09/2026;0;-1
+49;Asesoría Echave;finanzas;Bilbao;3;micro;https://www.asesoriaechave.example;;ninguna;;0;-1
+50;Estructuras Sarasola;construccion;Zumarraga;1;mediana;https://www.estructurassarasola.example;https://www.estructurassarasola.example/empleo;ats;19/09/2026;0;-1
+51;Gestoría Iturriaga;finanzas;Errenteria;1;pequeña;https://www.gestoriaiturriaga.example;;ninguna;;0;-1
+52;Consultoría Goikoetxea;consultoria;Madrid;2;grande;https://www.consultoriagoikoetxea.example;;ninguna;;0;-1
+53;Gestoría Zubizarreta S. Coop.;finanzas;Errenteria;1;pequeña;https://www.gestoriazubizarreta.example;;ninguna;;0;-1
+54;Transportes Elizondo;logistica;Beasain;1;mediana;https://www.transporteselizondo.example;;ninguna;;0;-1
+55;Talleres Azkue S. Coop.;industria;Irun;1;mediana;https://www.talleresazkue.example;https://www.talleresazkue.example/empleo;manual;;0;-1
+56;Consultoría Urrutia;consultoria;Madrid;2;micro;https://www.consultoriaurrutia.example;;ninguna;;0;-1
+57;Clínica Goikoetxea S. Coop.;salud;Oñati;1;pequeña;https://www.clinicagoikoetxea.example;https://www.clinicagoikoetxea.example/empleo;html;22/09/2026;0;-1
+58;Sistemas Lasa;tecnologia;Legazpi;1;mediana;https://www.sistemaslasa.example;;ninguna;;0;-1
+59;Transportes Uranga S. Coop.;logistica;Donostia;1;pequeña;https://www.transportesuranga.example;;ninguna;;0;-1
+60;Fundiciones Garmendia S. Coop.;industria;Hernani;1;mediana;https://www.fundicionesgarmendia.example;https://www.fundicionesgarmendia.example/empleo;manual;;0;-1
+61;(Lanbide, sin identificar);;;1;;;;ninguna;;0;-1

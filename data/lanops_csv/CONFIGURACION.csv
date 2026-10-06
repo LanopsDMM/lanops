@@ -1,0 +1,8 @@
+clave;valor;descripcion
+cupo_recomendaciones;3;Recomendaciones que puede hacer cada usuario
+caducidad_certificado_dias;30;Días hasta que caduca un certificado
+reevaluar_si_dias;7;Si la evaluación tiene más días, se reevalúa antes de certificar
+cierre_agente_dias;14;Días sin ver una vacante del agente para cerrarla
+umbral_banda_alta;4;Global mínima para banda Alta
+umbral_banda_media;3;Global mínima para banda Media
+max_evaluaciones_por_ejecucion;20;Tope de evaluaciones con Claude por ejecución de LANOPS-ENCAJE

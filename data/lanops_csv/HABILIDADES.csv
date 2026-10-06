@@ -1,0 +1,61 @@
+id;nombre;categoria
+1;Python;tecnica
+2;SQL;tecnica
+3;Java;tecnica
+4;JavaScript;tecnica
+5;React;tecnica
+6;Contabilidad;tecnica
+7;Diseño gráfico;tecnica
+8;Redes;tecnica
+9;Ciberseguridad;tecnica
+10;Machine learning;tecnica
+11;Gestión de proyectos;tecnica
+12;Logística;tecnica
+13;Soldadura;tecnica
+14;Mecanizado CNC;tecnica
+15;Prevención de riesgos;tecnica
+16;Análisis estadístico;tecnica
+17;Euskera;idioma
+18;Inglés;idioma
+19;Francés;idioma
+20;Alemán;idioma
+21;Trabajo en equipo;transversal
+22;Comunicación;transversal
+23;Resolución de problemas;transversal
+24;Pensamiento crítico;transversal
+25;Liderazgo;transversal
+26;Adaptabilidad;transversal
+27;Organización;transversal
+28;Atención al cliente;transversal
+29;Negociación;transversal
+30;Proactividad;transversal
+31;Orientación a resultados;transversal
+32;Creatividad;transversal
+33;Empatía;transversal
+34;Gestión del tiempo;transversal
+35;Autonomía;transversal
+36;Flexibilidad;transversal
+37;Trabajo bajo presión;transversal
+38;Vocación de servicio;transversal
+39;Ética profesional;transversal
+40;Iniciativa;transversal
+41;Atención al detalle;transversal
+42;Excel avanzado;herramienta
+43;Power BI;herramienta
+44;AutoCAD;herramienta
+45;Microsoft Office;herramienta
+46;SAP;herramienta
+47;Salesforce;herramienta
+48;Jira;herramienta
+49;Figma;herramienta
+50;Photoshop;herramienta
+51;WordPress;herramienta
+52;Google Analytics;herramienta
+53;Odoo;herramienta
+54;n8n;herramienta
+55;Access;herramienta
+56;Git;herramienta
+57;Docker;herramienta
+58;Tableau;herramienta
+59;QuickBooks;herramienta
+60;HubSpot;herramienta
