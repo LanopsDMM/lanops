@@ -5,6 +5,15 @@ Encaje a la medida (Pieza 5, dueño Marcos). El usuario abre su enlace firmado
 el flujo evalúa con Claude lo que falte y devuelve su lista en HTML.
 Estado: todos los nodos `probado en simulación` (5-oct-2026: Postgres 16 local con las 261 vacantes reales
 de Lanbide, firma HMAC con Node, respuestas de Claude simuladas). Falta la prueba con el modelo real en n8n.
+**[6-oct-2026] `probado en real` y publicado** (versión "Primera versión: encaje con Claude Sonnet 5.5"):
+usuario sintético 1, 3 vacantes reales de Lanbide en Ordizia evaluadas por `claude-sonnet-5-5` (globales 1,4–1,6, banda Baja,
+coherentes con su CV de Economía), guardadas en `lanops.evaluaciones`; página HTML servida por la Production URL
+sin el editor abierto. Enlace malo → `403 Enlace no válido.` Caché de prompt verificado (`cache_read_input_tokens` > 0).
+Coste observado: ~10 cts la primera evaluación con caché frío, ~2 cts las siguientes; 23 cts en total en las pruebas.
+Cambios respecto al diseño del 5-oct: `Code: firma` en vez de Crypto (nodo 2); prefiltro acepta jornada `indiferente`;
+`max_tokens` 4096 (con 1024 el razonamiento del modelo cortaba el JSON). Durante el montaje: fijar (*pin*) la salida de
+`HTTP Request: Claude` para no gastar, y quitar el pin antes de publicar.
+Limitación conocida: el municipio `duro` se filtra por nombre exacto; `radio_km` no se aplica en SQL.
 
 Requisitos previos en Postgres: `norm.sql` ejecutado una vez; índice único
 `evaluaciones (usuario, vacante, evaluador, hash_cv)`; CONFIGURACION `max_evaluaciones_por_ejecucion = 20`;
@@ -14,7 +23,7 @@ Requisito en Railway: variable `ENCAJE_SECRET` (distinta de `CERT_SECRET`).
 | # | Nodo n8n | Archivo | Configuración |
 |---|---|---|---|
 | 1 | `Webhook /encaje` | — | GET · Path `encaje` · Respond: Using 'Respond to Webhook' Node |
-| 2 | `Crypto: firma` | — | Action Hmac · Type SHA256 · Value `encaje:{{ $json.query.u }}` · Secret `{{ $env.ENCAJE_SECRET }}` · Encoding HEX · Property Name `firma` |
+| 2 | `Code: firma` | `code-firma.js` | Run Once for All Items. [06-oct] Sustituye a `Crypto: firma`: en n8n 2.x el nodo Crypto pide el secreto en una credencial y no admite `$env`. Lee `$env.ENCAJE_SECRET` (requiere `N8N_BLOCK_ENV_ACCESS_IN_NODE=false`) y añade `firma` = HMAC-SHA256 hex de `encaje:<u>` |
 | 3 | `Code: entrada` | `code-entrada.js` | Run Once for All Items |
 | 4 | `IF firma válida` | — | `{{ $json.valido }}` es true · rama false → `Respond 403` |
 | 4b | `Respond 403` | — | Respond With Text · `Enlace no válido.` · Response Code 403 |
@@ -29,7 +38,7 @@ Requisito en Railway: variable `ENCAJE_SECRET` (distinta de `CERT_SECRET`).
 | 13 | `Code: HTML` | `code-html.js` | Run Once for All Items |
 | 14 | `Respond to Webhook` | — | Respond With Text · `{{ $json.html }}` · Header `Content-Type: text/html; charset=utf-8` |
 
-Generar el enlace de un usuario (para pruebas o para `LANOPS-ALTA`): mismo nodo `Crypto` con
-Value `encaje:<id>` y el mismo secreto; enlace = `<URL de producción del webhook>?u=<id>&t=<firma>`.
+Generar el enlace de un usuario (para pruebas o para `LANOPS-ALTA`): mismo código de `code-firma.js` con
+`query.u = <id>` y el mismo secreto; enlace = `<URL de producción del webhook>?u=<id>&t=<firma>`.
 
 `ejemplo-lista.html`: cómo se ve la respuesta (datos simulados).

@@ -20,7 +20,7 @@ return vacantes.map(v => ({ json: {
   sin_pendientes: false, usuario: ctx.usuario, vacante: v.vacante, evaluador: ctx.evaluador, hash_cv: ctx.hash_cv,
   cuerpo: {
     model: ctx.modelo,
-    max_tokens: 1024,
+    max_tokens: 4096,   // [06-oct] 1024 se quedaba corto: el modelo piensa antes de responder y cortaba el JSON
     // Bloque fijo (career-ops + envoltorio): se cachea y se lee al 10 % en las llamadas siguientes.
     system: [{ type: 'text', text: ctx.prompt, cache_control: { type: 'ephemeral' } }],
     messages: [{ role: 'user', content: [

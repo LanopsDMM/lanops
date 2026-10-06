@@ -35,7 +35,7 @@ WITH u AS (
          OR c.contrato IS NULL OR EXISTS (SELECT 1 FROM p WHERE tipo='duro' AND clave='contrato' AND p.v = c.contrato))
     AND (NOT EXISTS (SELECT 1 FROM p WHERE tipo='duro' AND clave='jornada')
          OR c.jornada IS NULL OR c.jornada = 'indiferente'
-         OR EXISTS (SELECT 1 FROM p WHERE tipo='duro' AND clave='jornada' AND p.v = c.jornada))
+         OR EXISTS (SELECT 1 FROM p WHERE tipo='duro' AND clave='jornada' AND p.v IN (c.jornada, 'indiferente')))
     AND (NOT EXISTS (SELECT 1 FROM p WHERE tipo='duro' AND clave='salario_min')
          OR c.salario_min IS NULL
          OR c.salario_min >= (SELECT max(nullif(regexp_replace(p.v, '\D', '', 'g'), '')::int)
