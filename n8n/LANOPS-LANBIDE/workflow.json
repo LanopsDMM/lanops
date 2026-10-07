@@ -1,0 +1,170 @@
+{
+  "name": "LANOPS-LANBIDE",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "45ef091c-e42b-46a2-a30d-3f01f609ed0e",
+      "name": "Schedule Trigger (06:00)"
+    },
+    {
+      "parameters": {
+        "url": "https://web.lanbide.eus/apps/OF_OFERTAS_ODE_JSON",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "5f2cb473-f618-479a-b509-e8cf00f118ae",
+      "name": "HTTP Request (JSON)"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n · workflow LANOPS-LANBIDE · nodo \"Code: filtrar\"\n// Modo: Run Once for All Items · Lenguaje: JavaScript\n// Entrada: salida del nodo \"HTTP Request (JSON)\" con Response Format = File\n//          (propiedad binaria \"data\"). El JSON de Lanbide viene en ISO-8859-1.\n// Salida: un item por vacante de Gipuzkoa, con los campos de lanops.vacantes.\n//         hash, empresa, estado y vista_en NO se calculan aquí: los pone el SQL\n//         (md5(codigo_externo), fila placeholder de EMPRESAS, 'abierta', CURRENT_DATE).\n\nconst PROVINCIA = 'GIPUZKOA';\nconst LINEA_DISC = 'Oferta reservada a personas con discapacidad.';\n\n// 1. Leer y decodificar. [06-oct] web.lanbide.eus lo sirve como application/jsonp:\n//    se acepta UTF-8 o latin1 y se quita un posible envoltorio callback(...).\nconst buf = await this.helpers.getBinaryDataBuffer(0, 'data');\nlet txt;\ntry { txt = new TextDecoder('utf-8', { fatal: true }).decode(buf); }\ncatch (e) { txt = buf.toString('latin1'); }   // no es UTF-8 válido -> ISO-8859-1\nconst ini = txt.indexOf('['), fin = txt.lastIndexOf(']');\nif (ini < 0 || fin < ini) throw new Error('Lanbide: no se encuentra el array de ofertas');\nconst ofertas = JSON.parse(txt.slice(ini, fin + 1));\nif (!Array.isArray(ofertas)) throw new Error('Lanbide: se esperaba un array en la raíz');\n\n// 2. Utilidades\nconst recorta = (s, n) => (s == null ? null : String(s).trim().slice(0, n) || null);\nconst fechaISO = (s) => {                      // 'dd/mm/aaaa' -> 'aaaa-mm-dd'\n  const m = /^(\\d{2})\\/(\\d{2})\\/(\\d{4})$/.exec((s || '').trim());\n  return m ? `${m[3]}-${m[2]}-${m[1]}` : null;\n};\nconst minus = (s) => (s || '').toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '');\n\n// Heurísticas sobre el texto libre (nulo si no se puede decidir; nunca adivinar)\nconst contrato = (t) => {\n  const hits = [];\n  if (/indefinid/.test(t)) hits.push('indefinido');\n  if (/practicas|\\bbeca\\b/.test(t)) hits.push('practicas');\n  if (/temporal|duracion determinada|sustitucion|obra y servicio|interinidad/.test(t)) hits.push('temporal');\n  return hits.length === 1 ? hits[0] : null;   // 0 o varios -> nulo\n};\nconst jornada = (t) => {\n  const c = /jornada completa|tiempo completo|a jornada complet/.test(t);\n  const p = /parcial|media jornada/.test(t);\n  return c && !p ? 'completa' : p && !c ? 'parcial' : null;\n};\nconst salarioMin = (t) => {                    // primer importe anual plausible\n  for (const m of t.matchAll(/(\\d{1,3}(?:\\.\\d{3})+|\\d{5,6})(?:,\\d{1,2})?/g)) {\n    const n = parseInt(m[1].replace(/\\./g, ''), 10);\n    if (n >= 12000 && n <= 150000) return n;\n  }\n  return null;                                 // mensual, por hora o sin dato -> nulo\n};\n\n// 3. Filtrar y mapear\nconst salida = [];\nfor (const o of ofertas) {\n  if ((o.provincia || '').trim().toUpperCase() !== PROVINCIA) continue;\n  if (!o.codigo) continue;\n  const texto = (o.desPuesto || '').trim();\n  const t = minus(texto);\n  const requisitos = o.disc === 'S' ? `${texto}\\n${LINEA_DISC}` : texto;\n  salida.push({ json: {\n    codigo_externo: recorta(o.codigo, 30),\n    puesto:         recorta(o.desEmpleo, 150),\n    requisitos,\n    contrato:       contrato(t),\n    jornada:        jornada(t),\n    ubicacion:      recorta(o.municipio, 60),\n    salario_min:    salarioMin(t),\n    fuente:         'lanbide',\n    url_origen:     recorta(o.url, 255),\n    fecha_pub:      fechaISO(o.fecPub),\n  }});\n}\nif (salida.length === 0) throw new Error('Lanbide: 0 ofertas de Gipuzkoa; no se toca la base');\nreturn salida;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "46a1fb5a-05f0-4863-8acc-832d138122aa",
+      "name": "Code: filtrar"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH filas AS (\n  SELECT r.*\n  FROM jsonb_to_recordset($1::jsonb) AS r(\n    codigo_externo text, puesto text, requisitos text, contrato text, jornada text,\n    ubicacion text, salario_min integer, url_origen text, fecha_pub date)\n), placeholder AS (\n  SELECT id FROM lanops.empresas WHERE nombre = '(Lanbide, sin identificar)'\n)\nINSERT INTO lanops.vacantes AS v\n  (empresa, puesto, requisitos, contrato, jornada, ubicacion, salario_min,\n   estado, fuente, url_origen, codigo_externo, hash, fecha_pub, vista_en)\nSELECT (SELECT id FROM placeholder), f.puesto, f.requisitos, f.contrato, f.jornada,\n       f.ubicacion, f.salario_min, 'abierta', 'lanbide', f.url_origen,\n       f.codigo_externo, md5(f.codigo_externo), f.fecha_pub, CURRENT_DATE\nFROM filas f\nON CONFLICT (hash) DO UPDATE SET\n  puesto      = EXCLUDED.puesto,\n  requisitos  = EXCLUDED.requisitos,\n  contrato    = EXCLUDED.contrato,\n  jornada     = EXCLUDED.jornada,\n  ubicacion   = EXCLUDED.ubicacion,\n  salario_min = EXCLUDED.salario_min,\n  url_origen  = EXCLUDED.url_origen,\n  estado      = 'abierta',          -- si reaparece, se reabre\n  vista_en    = CURRENT_DATE\nWHERE v.fuente = 'lanbide'          -- nunca pisa vacantes de otra fuente\nRETURNING (xmax = 0) AS nueva;",
+        "options": {
+          "queryReplacement": "={{ [ JSON.stringify($input.all().map(i => i.json)) ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        672,
+        0
+      ],
+      "id": "bd372885-a2fa-4c2d-b924-01010eeb5029",
+      "name": "Postgres: upsert vacantes",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "3RgYPRfrWQzGR0wq",
+          "name": "Postgres LANOPS (marcos)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "   UPDATE lanops.vacantes\n   SET estado = 'cerrada'\n   WHERE fuente = 'lanbide'\n     AND estado = 'abierta'\n     AND vista_en < CURRENT_DATE\n     AND EXISTS (SELECT 1 FROM lanops.vacantes\n                 WHERE fuente = 'lanbide' AND vista_en = CURRENT_DATE)\n   RETURNING id;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        896,
+        0
+      ],
+      "id": "4af0be1a-4dd5-480c-928a-634bea542482",
+      "name": "Postgres: cerrar desaparecidas",
+      "executeOnce": true,
+      "credentials": {
+        "postgres": {
+          "id": "3RgYPRfrWQzGR0wq",
+          "name": "Postgres LANOPS (marcos)"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger (06:00)": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request (JSON)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request (JSON)": {
+      "main": [
+        [
+          {
+            "node": "Code: filtrar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: filtrar": {
+      "main": [
+        [
+          {
+            "node": "Postgres: upsert vacantes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres: upsert vacantes": {
+      "main": [
+        [
+          {
+            "node": "Postgres: cerrar desaparecidas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false,
+    "timezone": "Europe/Madrid",
+    "executionTimeout": -1
+  },
+  "versionId": "3c4570a4-34f2-46b1-95bf-437db6773df8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f542eb0e5dc5c19946d2b8c8bc24a3b9d0a1fe1c48da820339cf1e58a9b75fa6"
+  },
+  "nodeGroups": [],
+  "id": "gO0ivK6oLz0EbaVK",
+  "tags": []
+}
