@@ -1,0 +1,39 @@
+-- LANOPS · carga de data/empresas.csv en lanops.empresas (Pieza 8 → Pieza 6, 07-oct-2026)
+-- Se pega en n8n → workflow "LANOPS · SQL a mano" (credencial Postgres LANOPS (marcos)).
+-- Inserta solo las empresas que aún no existen (comparando el nombre sin tildes ni mayúsculas con lanops.norm):
+-- Ceit ya existe (id 62, data/demo-certificado.sql) y se salta. Se puede ejecutar varias veces sin duplicar.
+-- Generado desde data/empresas.csv: si cambia el CSV, regenerar este archivo.
+WITH nuevas (nombre, sector, ciudad, anillo, tamano, url_web, url_empleo, tipo_lectura) AS (VALUES
+  ('Vicomtech', 'i+d', 'Donostia', 1, 'mediana', 'https://www.vicomtech.org', 'https://www.vicomtech.org/es/ofertas-de-trabajo', 'html'),
+  ('CIC nanoGUNE', 'i+d', 'Donostia', 1, 'mediana', 'https://www.nanogune.eu', 'https://www.nanogune.eu/es/unete', 'html'),
+  ('Ceit', 'i+d', 'Donostia', 1, 'grande', 'https://www.ceit.es', 'https://ceit.es/en/join-ceit/opportunities/ceit-ik4-opportunities', 'ats'),
+  ('Tecnalia', 'i+d', 'Donostia', 1, 'grande', 'https://www.tecnalia.com', 'https://www.tecnalia.com/ofertas-de-empleo', 'ats'),
+  ('Ikerlan', 'i+d', 'Arrasate', 1, 'grande', 'https://www.ikerlan.es', NULL, 'ninguna'),
+  ('Orona', 'industria', 'Hernani', 1, 'grande', 'https://www.orona-group.com', 'https://jobs1.orona-group.com/', 'ats'),
+  ('CAF', 'industria', 'Beasain', 1, 'grande', 'https://www.cafmobility.com', 'https://jobs.caf.net/', 'ats'),
+  ('Irizar', 'industria', 'Ormaiztegi', 1, 'grande', 'https://www.irizar.com', 'https://www.irizar.com/contacto', 'manual'),
+  ('Fagor Arrasate', 'industria', 'Arrasate', 1, 'grande', 'https://fagorarrasate.com', 'https://fagorarrasate.com/talent/job-offers/', 'ats'),
+  ('Fagor Ederlan', 'industria', 'Eskoriatza', 1, 'grande', 'https://www.fagorederlan.com', 'https://www.fagorederlan.com/es/ofertas-trabajo', 'ats'),
+  ('Danobatgroup', 'industria', 'Elgoibar', 1, 'grande', 'https://www.danobatgroup.com', 'https://www.danobatgroup.com/es/empleo', 'manual'),
+  ('Orkli', 'industria', 'Ordizia', 1, 'grande', 'https://www.orkli.com', 'https://www.orkli.com/es/trabaja-con-nosotros', 'manual'),
+  ('Ingeteam Indar Machines', 'industria', 'Beasain', 1, 'grande', 'https://www.ingeteam.com', 'https://ingeteam.teamtailor.com/es', 'ats'),
+  ('Copreci', 'industria', 'Aretxabaleta', 1, 'grande', 'https://www.copreci.com', 'https://www.copreci.com/talento', 'ats'),
+  ('Ikusi', 'tecnologia', 'Donostia', 1, 'grande', 'https://www.ikusi.com', 'https://ikusi.wd3.myworkdayjobs.com/es/Vacantes_Sitio_Externo', 'ats'),
+  ('LKS Next', 'tecnologia', 'Arrasate', 1, 'grande', 'https://www.lksnext.com', 'https://www.lksnext.com/es/haz-carrera/ofertas-de-trabajo-lks-next/', 'ats'),
+  ('Laboral Kutxa', 'finanzas', 'Arrasate', 1, 'grande', 'https://www.laboralkutxa.com', 'https://talentua.laboralkutxa.com/', 'ats'),
+  ('Mondragon Unibertsitatea', 'educacion', 'Arrasate', 1, 'grande', 'https://www.mondragon.edu', 'https://www.mondragon.edu/es/trabaja-nosotros-oferta', 'html'),
+  ('MONDRAGON Corporación (portal de empleo de las cooperativas)', 'industria', 'Arrasate', 1, 'grande', 'https://www.mondragon-corporation.com', 'https://www.mondragon-corporation.com/people/oportunidades-profesionales/', 'html'),
+  ('Gureak', 'social', 'Donostia', 1, 'grande', 'https://www.gureak.com', 'http://www.gureakitinerary.com/es/trabaja-con-nosotros?web=corporativa', 'html'),
+  ('Matia Fundazioa', 'salud', 'Donostia', 1, 'grande', 'https://www.matiafundazioa.eus', 'https://empleo.matia.eus/', 'ats'),
+  ('Ausolan', 'hosteleria', 'Arrasate', 1, 'grande', 'https://www.ausolan.com', 'https://ofertas.ausolan.com/jobs', 'html'),
+  ('BM Supermercados (Grupo Uvesco)', 'comercio', 'Irun', 1, 'grande', 'https://www.uvesco.es', 'https://talento.bmsupermercados.es', 'ats'),
+  ('Elkar', 'comercio', 'Aduna', 1, 'mediana', 'https://www.elkar.eus', 'https://www.elkar.eus/es/trabaja-con-nosotros', 'manual')
+), ins AS (
+  INSERT INTO lanops.empresas (nombre, sector, ciudad, anillo, tamano, url_web, url_empleo, tipo_lectura, fallos_seguidos, activa)
+  SELECT n.nombre, n.sector, n.ciudad, n.anillo, n.tamano, n.url_web, n.url_empleo, n.tipo_lectura, 0, true
+  FROM nuevas n
+  WHERE NOT EXISTS (SELECT 1 FROM lanops.empresas e WHERE lanops.norm(e.nombre) = lanops.norm(n.nombre))
+  RETURNING id, nombre
+)
+SELECT (SELECT count(*) FROM ins) AS insertadas,
+       (SELECT count(*) FROM lanops.empresas) + (SELECT count(*) FROM ins) AS total_empresas;
