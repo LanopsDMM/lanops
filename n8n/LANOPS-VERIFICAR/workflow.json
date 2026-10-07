@@ -1,0 +1,170 @@
+{
+  "name": "LANOPS-VERIFICAR",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "verificar",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "f4bb4e3c-7b4d-4d41-ad71-fa011043b74c",
+      "name": "Webhook /verificar",
+      "webhookId": "7fb027f0-476c-422f-8239-03d20e15c587"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- n8n · workflow LANOPS-VERIFICAR · nodo \"Postgres: buscar\"\n-- Execute Query · Execute Once ON · Settings → Always Output Data ON (código inexistente → item vacío)\n-- Query Parameters: {{ [ String($('Webhook /verificar').first().json.query.c || '') ] }}\n-- Datos del certificado + \"mensaje\" recalculado con el MISMO formato que ../LANOPS-CERTIFICADO/preparar.sql:\n--   codigo|usuario|vacante|global con 2 decimales|fecha de emisión AAAA-MM-DD\n-- caducado_ahora: true si la fecha de caducidad ya pasó (hora de Madrid).\nSELECT c.codigo, c.firma, c.estado, c.veces_verificado,\n       c.codigo || '|' || c.usuario || '|' || c.vacante || '|'\n         || to_char(round(x.global::numeric, 2), 'FM0.00') || '|'\n         || to_char(c.fecha_emision, 'YYYY-MM-DD') AS mensaje,\n       (c.fecha_caducidad < now() AT TIME ZONE 'Europe/Madrid') AS caducado_ahora,\n       to_char(c.fecha_emision, 'YYYY-MM-DD')   AS fecha_emision,\n       to_char(c.fecha_caducidad, 'YYYY-MM-DD') AS fecha_caducidad,\n       us.nombre AS titular,\n       (us.estado_verificacion = 'verificado') AS titular_verificado,\n       CASE WHEN us.estado_verificacion = 'verificado' THEN\n         (SELECT en.nombre FROM lanops.verificaciones vf JOIN lanops.entidades en ON en.id = vf.entidad\n          WHERE vf.usuario = us.id AND vf.estado = 'aprobada' ORDER BY vf.fecha DESC LIMIT 1) END AS entidad,\n       v.puesto,\n       CASE WHEN v.fuente = 'lanbide' THEN 'Empresa no publicada · oferta gestionada por Lanbide'\n            ELSE em.nombre END AS empresa,\n       v.ubicacion, v.url_origen AS url_oferta,\n       round(x.global::numeric, 2) AS global, x.banda,\n       x.d1_match_cv, x.d2_north_star, x.d3_compensacion, x.d4_cultura, x.d5_red_flags,\n       to_char(x.fecha, 'YYYY-MM-DD') AS fecha_evaluacion,\n       evr.version_rubrica, evr.modelo\nFROM lanops.certificados c\nJOIN lanops.usuarios us     ON us.id = c.usuario\nJOIN lanops.vacantes v      ON v.id = c.vacante\nJOIN lanops.empresas em     ON em.id = v.empresa\nJOIN lanops.evaluaciones x  ON x.id = c.evaluacion\nJOIN lanops.evaluadores evr ON evr.id = x.evaluador\nWHERE c.codigo = $1;",
+        "options": {
+          "queryReplacement": "={{ [ String($('Webhook /verificar').first().json.query.c || '') ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        224,
+        0
+      ],
+      "id": "c0a3bc9f-eb70-4d90-a825-f65b79910c9d",
+      "name": "Postgres: buscar",
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "3RgYPRfrWQzGR0wq",
+          "name": "Postgres LANOPS (marcos)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n · workflow LANOPS-VERIFICAR · nodo \"Code: comprobar\"  (detrás de \"Postgres: buscar\")\n// Modo: Run Once for All Items · JavaScript\n// Recalcula la firma con CERT_SECRET y decide el estado. Salida:\n//   respuesta → el JSON que devuelve el webhook (contrato con verificar/index.html, Pieza 6; ver README)\n//   contar    → si hay que sumar 1 a veces_verificado (solo certificados encontrados y con firma buena)\n//   estado_bd → estado que se guarda ('caducado' si la fecha ya pasó y seguía 'vigente')\n// SHA-256 en JavaScript puro (mismo código que ../LANOPS-ENCAJE/code-firma.js).\n\nfunction sha256(bytes) {\n  const K = [0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,\n    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,\n    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,\n    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,\n    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,\n    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,\n    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,\n    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];\n  const H = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];\n  const l = bytes.length, n = ((l + 9 + 63) >> 6) << 6, m = new Uint8Array(n);\n  m.set(bytes); m[l] = 0x80;\n  const bits = l * 8;\n  m[n - 4] = (bits >>> 24) & 255; m[n - 3] = (bits >>> 16) & 255; m[n - 2] = (bits >>> 8) & 255; m[n - 1] = bits & 255;\n  m[n - 5] = Math.floor(bits / 2 ** 32) & 255;\n  const w = new Uint32Array(64), r = (x, s) => (x >>> s) | (x << (32 - s));\n  for (let i = 0; i < n; i += 64) {\n    for (let t = 0; t < 16; t++) w[t] = (m[i+4*t] << 24) | (m[i+4*t+1] << 16) | (m[i+4*t+2] << 8) | m[i+4*t+3];\n    for (let t = 16; t < 64; t++) {\n      const s0 = r(w[t-15], 7) ^ r(w[t-15], 18) ^ (w[t-15] >>> 3);\n      const s1 = r(w[t-2], 17) ^ r(w[t-2], 19) ^ (w[t-2] >>> 10);\n      w[t] = (w[t-16] + s0 + w[t-7] + s1) | 0;\n    }\n    let [a, b, c, d, e, f, g, h] = H;\n    for (let t = 0; t < 64; t++) {\n      const t1 = (h + (r(e, 6) ^ r(e, 11) ^ r(e, 25)) + ((e & f) ^ (~e & g)) + K[t] + w[t]) | 0;\n      const t2 = ((r(a, 2) ^ r(a, 13) ^ r(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) | 0;\n      h = g; g = f; f = e; e = (d + t1) | 0; d = c; c = b; b = a; a = (t1 + t2) | 0;\n    }\n    H[0] = (H[0] + a) | 0; H[1] = (H[1] + b) | 0; H[2] = (H[2] + c) | 0; H[3] = (H[3] + d) | 0;\n    H[4] = (H[4] + e) | 0; H[5] = (H[5] + f) | 0; H[6] = (H[6] + g) | 0; H[7] = (H[7] + h) | 0;\n  }\n  const out = new Uint8Array(32);\n  H.forEach((v, i) => { out[4*i] = v >>> 24; out[4*i+1] = (v >>> 16) & 255; out[4*i+2] = (v >>> 8) & 255; out[4*i+3] = v & 255; });\n  return out;\n}\nconst utf8 = (s) => new TextEncoder().encode(s);\nfunction hmacHex(secreto, mensaje) {\n  let k = utf8(secreto);\n  if (k.length > 64) k = sha256(k);\n  const ki = new Uint8Array(64), ko = new Uint8Array(64);\n  for (let i = 0; i < 64; i++) { ki[i] = (k[i] || 0) ^ 0x36; ko[i] = (k[i] || 0) ^ 0x5c; }\n  const m = utf8(mensaje), interior = new Uint8Array(64 + m.length);\n  interior.set(ki); interior.set(m, 64);\n  const ih = sha256(interior), exterior = new Uint8Array(96);\n  exterior.set(ko); exterior.set(ih, 64);\n  return Array.from(sha256(exterior), (x) => x.toString(16).padStart(2, '0')).join('');\n}\n\n\nconst r = $input.first().json;                                   // vacío si el código no existe\nconst pedido = String(($('Webhook /verificar').first().json.query || {}).c || '');\nif (!r.codigo) {\n  return [{ json: { contar: false, codigo: '', estado_bd: null,\n    respuesta: { valido: false, estado: 'no_encontrado', codigo: pedido.slice(0, 36) } } }];\n}\nconst secreto = $env.CERT_SECRET;\nif (!secreto) throw new Error('VERIFICAR: falta la variable CERT_SECRET en el servicio n8n');\nif (hmacHex(secreto, r.mensaje) !== String(r.firma).toLowerCase()) {\n  // Los datos no coinciden con lo que se firmó: no se muestra nada del certificado.\n  return [{ json: { contar: false, codigo: '', estado_bd: null,\n    respuesta: { valido: false, estado: 'firma_no_valida', codigo: r.codigo } } }];\n}\nconst estado = r.estado === 'revocado' ? 'revocado'\n             : (r.estado === 'caducado' || r.caducado_ahora) ? 'caducado' : 'vigente';\nconst g = Number(r.global);\nreturn [{ json: {\n  contar: true,\n  codigo: r.codigo,\n  estado_bd: estado,\n  respuesta: {\n    valido: estado === 'vigente',\n    estado,\n    codigo: r.codigo,\n    titular: r.titular,\n    titular_verificado: r.titular_verificado === true,\n    entidad: r.entidad || null,\n    puesto: r.puesto,\n    empresa: r.empresa,\n    ubicacion: r.ubicacion || null,\n    url_oferta: r.url_oferta || null,\n    porcentaje: Math.round(g * 20),          // decisión 26: % = global × 20\n    global: Math.round(g * 100) / 100,\n    banda: r.banda,\n    dimensiones: {\n      d1_match_cv: r.d1_match_cv, d2_north_star: r.d2_north_star, d3_compensacion: r.d3_compensacion,\n      d4_cultura: r.d4_cultura, d5_red_flags: r.d5_red_flags,\n    },\n    fecha_evaluacion: r.fecha_evaluacion,\n    fecha_emision: r.fecha_emision,\n    fecha_caducidad: r.fecha_caducidad,\n    version_rubrica: r.version_rubrica,\n    modelo: r.modelo,\n    veces_verificado: Number(r.veces_verificado || 0) + 1,   // contando esta consulta\n  },\n} }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "5a157324-7aa5-4a71-940a-a9c9027b389f",
+      "name": "Code: comprobar"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- n8n · workflow LANOPS-VERIFICAR · nodo \"Postgres: contar\"\n-- Execute Query · Execute Once ON · Settings → Always Output Data ON (si no actualiza nada, la respuesta sale igual)\n-- Query Parameters: {{ [ $json.contar ? $json.codigo : '', $json.estado_bd || 'vigente' ] }}\n-- Suma 1 a veces_verificado y, si la fecha ya pasó, deja el certificado en 'caducado'.\n-- Nunca devuelve a 'vigente' un certificado revocado o caducado.\nUPDATE lanops.certificados\nSET veces_verificado = coalesce(veces_verificado, 0) + 1,\n    estado = CASE WHEN estado = 'vigente' AND $2 = 'caducado' THEN 'caducado' ELSE estado END\nWHERE codigo = $1\nRETURNING codigo, estado, veces_verificado;",
+        "options": {
+          "queryReplacement": "={{ [ $json.contar ? $json.codigo : '', $json.estado_bd || 'vigente' ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        672,
+        0
+      ],
+      "id": "269b0851-3e4a-4f19-ad66-8fb99a956d04",
+      "name": "Postgres: contar",
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "3RgYPRfrWQzGR0wq",
+          "name": "Postgres LANOPS (marcos)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $('Code: comprobar').first().json.respuesta }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        896,
+        0
+      ],
+      "id": "7899684c-ff14-4d55-a624-127087bf07d0",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook /verificar": {
+      "main": [
+        [
+          {
+            "node": "Postgres: buscar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres: buscar": {
+      "main": [
+        [
+          {
+            "node": "Code: comprobar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: comprobar": {
+      "main": [
+        [
+          {
+            "node": "Postgres: contar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres: contar": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "806d6554-a3f8-44c2-a234-8dc1acbbb6da",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f542eb0e5dc5c19946d2b8c8bc24a3b9d0a1fe1c48da820339cf1e58a9b75fa6"
+  },
+  "nodeGroups": [],
+  "id": "C9WnD6crUTJNt5iq",
+  "tags": []
+}
