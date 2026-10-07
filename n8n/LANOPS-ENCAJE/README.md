@@ -35,7 +35,7 @@ Requisito en Railway: variable `ENCAJE_SECRET` (distinta de `CERT_SECRET`).
 | 10 | `Code: leer evaluación` | `code-leer.js` | Run Once for All Items |
 | 11 | `Postgres: guardar evaluaciones` | `insertar.sql` | Execute Once ON · Always Output Data ON |
 | 12 | `Postgres: lista` | `lista.sql` | Execute Once ON · Always Output Data ON · entra desde 8 (true) y desde 11 |
-| 13 | `Code: HTML` | `code-html.js` | Run Once for All Items |
+| 13 | `Code: HTML` | `code-html.js` | Run Once for All Items. [07-oct] Botón **Pedir certificado** en tarjetas Alta/Media → `certificar?u=&t=&v=` (decisiones 99–100; usa `$('Webhook /encaje')`: nombre exacto); empresa de Lanbide = "Empresa no publicada · oferta gestionada por Lanbide" (decisión 96); "encaje alto/medio/bajo" |
 | 14 | `Respond to Webhook` | — | Respond With Text · `{{ $json.html }}` · Header `Content-Type: text/html; charset=utf-8` |
 
 Generar el enlace de un usuario (para pruebas o para `LANOPS-ALTA`): mismo código de `code-firma.js` con
