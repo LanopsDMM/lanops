@@ -1,57 +1,70 @@
 # LANOPS-FEEDBACK (n8n)
 
-Lo que LANOPS aprende de los descartes (Pieza 5, dueño Marcos; opción B del 08-oct-2026).
-En cada tarjeta de la lista de ENCAJE hay un formulario **"No me interesa por … · Descartar"**; la oferta sale
-de la lista y, según el motivo, LANOPS aprende una exclusión. La página **"Lo que LANOPS ha aprendido de ti"**
-enseña lo aprendido, los descartes y el perfil de búsqueda, y deja **deshacer** (dejar de excluir) y **recuperar** ofertas.
+Lo que LANOPS aprende de los descartes (Pieza 5, dueño Marcos; 08-oct-2026: opción B + IA, sin tocar pesos).
+En cada tarjeta de la lista de ENCAJE hay un formulario **"No me interesa · motivo (opcional) · Descartar"**: la oferta sale
+de la lista y, si hay motivo, LANOPS puede aprender una regla de exclusión. La página **"Lo que LANOPS ha aprendido de ti"**
+enseña las reglas aprendidas (con cuántas ofertas esconden y un botón para quitarlas), los descartes (para recuperarlos)
+y el perfil del alta (solo consulta: se cambia en el alta, Pieza 6).
 
-Estado: **[08-oct-2026] `probado en simulación`** (Postgres 16 local con `data/schema.sql`, los datos sintéticos,
-las 24 empresas y la persona demo; nodos Code y Postgres ejecutados tal cual con un simulador de n8n; 37 comprobaciones;
-páginas abiertas en Chromium). Falta montarlo en n8n.
+Estado: **[08-oct-2026] `probado en simulación`** (Postgres 16 local con `data/schema.sql`, datos sintéticos, las 24 empresas,
+la persona demo y ofertas de prueba tipo Lanbide; nodos Code y Postgres ejecutados tal cual con un simulador de n8n y respuestas
+de Claude simuladas; 51 comprobaciones; páginas abiertas en Chromium). Falta montarlo en n8n y probar con el modelo real.
 
-## Reglas (opción B)
-- Motivos: `tarea` (lo que se hace en el puesto) · `sector` · `empresa` · `salario` · `lejos` · `otro`. Todos se guardan en `lanops.feedback`
-  (`veredicto = 'descartada'`); la oferta deja de salir (ya lo hacían `prefiltro.sql` y `lista.sql`).
-- **`empresa`** → exclusión de esa empresa en `lanops.preferencias` al primer descarte. **Lanbide no** (no publica la empresa, decisión 96): se guarda el motivo y se explica.
-- **`sector`** → exclusión del sector cuando hay `descartes_para_excluir_sector` (CONFIGURACION, 2) descartes por sector del mismo sector. Sin sector conocido, no aprende.
-- `tarea`, `salario`, `lejos`, `otro` → solo se guardan.
-- **Deshacer** (`olvidar`): borra la exclusión aprendida y deja sin motivo los descartes que la enseñaron (siguen descartados, pero no la vuelven a enseñar).
-  Solo actúa sobre exclusiones con descartes detrás: las del alta no se tocan desde aquí.
-- **Recuperar**: borra el descarte; la oferta vuelve (sin gastar API: la evaluación sigue en caché). Si era el apoyo de una exclusión aprendida, la exclusión se retira cuando queda por debajo del umbral.
-- "Aprendida" no es una columna (estructura congelada): se deduce de los descartes. Límite conocido: si el usuario puso en su alta la misma exclusión que luego aprende, se ven como una sola.
-- Sin JavaScript en la página; formularios GET al mismo webhook (relativos: valen en la Test URL y en la Production URL).
-- La IA no decide estas reglas: puntúa las ofertas (ENCAJE). Lo aprendido son reglas a la vista que el usuario deshace.
+## Reglas
+- **Motivo opcional.** Por defecto "solo quitarla": se guarda el descarte con `motivo = NULL` y no se aprende nada
+  (mejor aprender menos que aprender mal por inercia). Motivos: `tarea` · `sector` · `empresa` · `salario` · `lejos` · `otro`.
+- **Reglas fijas (opción B), sin IA:**
+  - `empresa` → excluye esa empresa al primer descarte.
+  - `sector` → excluye el sector con `descartes_para_excluir_sector` (CONFIGURACION, 2) descartes por sector del mismo sector.
+- **IA** (`Code: preparar IA` → `HTTP Request: Claude` → `Code: leer regla`), solo en descartes nuevos con motivo que las reglas fijas no cubren:
+  `tarea`, `salario`, `lejos`, `otro`; `sector` sin sector conocido; `empresa` de Lanbide (no publica la empresa, decisión 96).
+  Claude lee la oferta, el motivo y el perfil de búsqueda (sin el CV) y propone **como mucho una** regla: `palabra` (aparece en la oferta),
+  `municipio` (solo con "está lejos") o `contrato`, con una frase de porqué para el usuario. Modelo = el del evaluador IA activo.
+  **`Code: leer regla` valida** antes de guardar (palabra genérica, que no está en la oferta, que choca con lo que busca el usuario,
+  su municipio o contrato no negociable, clave no permitida, JSON roto o error de la API → no se aprende nada y el descarte queda guardado).
+- Las reglas son exclusiones en `lanops.preferencias`: actúan en SQL al momento (`prefiltro.sql` y `lista.sql` de ENCAJE), **sin reevaluar**.
+  Los pesos no se tocan (cambiarían la nota y obligarían a reevaluar: después del 11-oct).
+- **Quitar** (`olvidar`) solo actúa sobre reglas aprendidas (con descartes que las respaldan); las del alta no se tocan desde aquí.
+  Quitar una de empresa o sector deja esos descartes sin motivo (siguen descartados) para que no se reaprenda sola.
+- **Recuperar** borra el descarte; la oferta vuelve sin gastar API (evaluación en caché). Si era el único apoyo de una regla, la regla se retira;
+  si otra regla la sigue escondiendo, la página lo dice.
+- "Aprendida" no es una columna (estructura congelada): se deduce de los descartes con las comparaciones de `prefiltro.sql`.
+  Límite conocido: una exclusión del alta idéntica a una aprendida se ve como aprendida.
 
 ## Enlace
 `…/webhook/descartar?u=<id>&t=<firma>&a=<acción>` con la **misma firma** que el enlace de ENCAJE (`encaje:<id>`, como CERTIFICADO).
-`a=descartar&v=<vacante>&m=<motivo>` · `a=recuperar&v=<vacante>` · `a=olvidar&k=empresa|sector&val=<valor>` · `a=ver`.
+`a=descartar&v=<vacante>[&m=<motivo>]` · `a=recuperar&v=<vacante>` · `a=olvidar&k=empresa|sector|palabra|municipio|contrato&val=<valor>` · `a=ver`.
 Sin `a`: con `v` descarta; sin `v`, enseña la página. Firma o parámetros malos → 403.
 
 ## Requisitos
 - `configuracion.sql` ejecutado una vez (fila `descartes_para_excluir_sector = 2`).
-- En ENCAJE: `lista.sql` [08-oct] también aplica las exclusiones (una exclusión aprendida oculta lo ya evaluado) y
-  `code-html.js` [08-oct] lleva el formulario de descarte y el enlace a "Lo que LANOPS ha aprendido de ti".
-- Variable `ENCAJE_SECRET` (ya existe).
+- En ENCAJE: `lista.sql` [08-oct] aplica también las exclusiones y `code-html.js` [08-oct] lleva el formulario y el enlace a esta página.
+- Variable `ENCAJE_SECRET` y credenciales `Postgres LANOPS (marcos)` y `Anthropic LANOPS` (ya existen).
+- Coste: una llamada corta por descarte con motivo (sin caché: el bloque fijo no llega al mínimo cacheable). Medir en la prueba real.
 
 | # | Nodo n8n | Archivo | Configuración |
 |---|---|---|---|
 | 1 | `Webhook /descartar` | — | GET · Path `descartar` · Respond: Using 'Respond to Webhook' Node |
-| 2 | `Code: firma` | `../LANOPS-ENCAJE/code-firma.js` | Igual que en ENCAJE (Run Once for All Items) |
+| 2 | `Code: firma` | `../LANOPS-ENCAJE/code-firma.js` | Igual que en ENCAJE |
 | 3 | `Code: entrada` | `code-entrada.js` | Run Once for All Items |
-| 4 | `IF firma válida` | — | `{{ $json.valido }}` is true · rama false → `Respond 403` |
-| 4b | `Respond 403` | — | Respond With Text · `Enlace no válido.` · Response Code 403 |
-| 5 | `Postgres: aplicar` | `aplicar.sql` | Execute Query · Execute Once ON · Always Output Data ON · `{{ [ JSON.stringify($('Code: entrada').first().json) ] }}` |
-| 6 | `Postgres: aprender` | `aprender.sql` | Igual · `{{ [ JSON.stringify({ ...$('Postgres: aplicar').first().json, usuario: $('Code: entrada').first().json.usuario }) ] }}` |
-| 7 | `Postgres: aprendido` | `aprendido.sql` | Igual · `{{ [ $('Code: entrada').first().json.usuario ] }}` |
-| 8 | `Code: HTML` | `code-html.js` | Run Once for All Items. Usa `$('Code: entrada')`, `$('Postgres: aplicar')`, `$('Postgres: aprender')`: **nombres exactos** |
-| 9 | `Respond to Webhook` | — | Respond With Text · `{{ $json.html }}` · Headers `Content-Type: text/html; charset=utf-8` y `Cache-Control: no-store` · Response Code `{{ $json.status }}` |
+| 4 | `IF firma válida` | — | `{{ $json.valido }}` is true · false → `Respond 403` (Text `Enlace no válido.`, 403) |
+| 5 | `Postgres: aplicar` | `aplicar.sql` | Execute Once ON · Always Output Data ON · `{{ [ JSON.stringify($('Code: entrada').first().json) ] }}` |
+| 6 | `Code: preparar IA` | `code-preparar.js` | Run Once for All Items |
+| 7 | `IF ¿preguntar a la IA?` | — | `{{ $json.pedir }}` is true → 8 · false → 10 |
+| 8 | `HTTP Request: Claude` | — | Copia del de ENCAJE (POST `https://api.anthropic.com/v1/messages`, credencial `Anthropic LANOPS`, `anthropic-version: 2023-06-01`, Body `{{ $json.cuerpo }}`) · Timeout 60000 · On Error: Continue |
+| 9 | `Code: leer regla` | `code-leer.js` | Run Once for All Items |
+| 10 | `Postgres: aprender` | `aprender.sql` | Execute Once ON · Always Output Data ON · `{{ [ JSON.stringify({ ...$('Postgres: aplicar').first().json, usuario: $('Code: entrada').first().json.usuario, regla: $json.regla, porque: $json.porque }) ] }}` · entra desde 7 (false) y 9 |
+| 11 | `Postgres: aprendido` | `aprendido.sql` | Igual · `{{ [ $('Code: entrada').first().json.usuario, $('Code: entrada').first().json.vacante ] }}` |
+| 12 | `Code: HTML` | `code-html.js` | Run Once for All Items. Usa `$('Code: entrada')`, `$('Postgres: aplicar')`, `$('Postgres: aprender')` y `$('Code: leer regla')`: **nombres exactos** |
+| 13 | `Respond to Webhook` | — | Text `{{ $json.html }}` · `Content-Type: text/html; charset=utf-8` · `Cache-Control: no-store` · Response Code `{{ $json.status }}` |
 
-`workflow.json` trae los 10 nodos ya configurados (credencial `Postgres LANOPS (marcos)`): se importa en n8n.
-`comprobar.sql`: consulta read-only de descartes y exclusiones de un usuario, para verificar una prueba.
+`workflow.json` trae los nodos ya configurados: se importa en n8n. `comprobar.sql`: consulta read-only de descartes y reglas de un usuario.
 
-Probado en simulación (8-oct): firma de otro usuario, sin firma, `v` no numérico, acción y clave no permitidas → 403 sin escribir nada;
-descartar por tarea (no aprende; recargar no duplica); 1.er descarte por sector (no aprende, avisa de cuántos faltan);
-por empresa (aprende al momento; la otra oferta ya evaluada de esa empresa sale de la lista); 2.º por sector con
-`I+D`/`i+d` (aprende); deshacer el sector (no se reaprende); deshacer una exclusión del alta (no se toca); recuperar
-(retira la exclusión sin apoyo y la oferta vuelve); recuperar con otro apoyo (sigue oculta y lo dice); Lanbide por empresa
-(no excluye al comodín, lo explica); vacante inexistente; valor con HTML escapado.
+Probado en simulación (8-oct, 51 comprobaciones): 403 con firma de otro usuario, sin firma, `v` no numérico, acción y clave no permitidas;
+sin motivo (no aprende ni llama a la IA; recargar no duplica); empresa y sector (sin IA; quitar el sector no se reaprende; una exclusión
+del alta no se puede quitar; recuperar retira la de empresa); IA con ofertas tipo Lanbide (petición con oferta, motivo y perfil, sin CV;
+palabra aprendida, la otra oferta parecida sale de la lista; recargar no vuelve a llamar); validación (palabra genérica o ausente,
+municipio sin "lejos" o no negociable, contrato distinto, clave no permitida, JSON roto, error de la API → sin regla); sin regla la página
+dice por qué; "a comisión" → `a comision`; municipio con dos apoyos (recuperar uno avisa de que sigue escondida); quitar reglas de la IA
+(las ofertas vuelven; la exclusión del alta sigue); Lanbide con empresa o sector → IA; recuperar el único apoyo retira la regla;
+vacante inexistente; valor con HTML escapado.

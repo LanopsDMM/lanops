@@ -3,12 +3,13 @@
 // Comprueba el enlace …/webhook/descartar?u=<id>&t=<firma>&a=<acción>[&v=<vacante>&m=<motivo>][&k=<clave>&val=<valor>]
 // La firma es la MISMA del enlace de ENCAJE: HMAC-SHA256(ENCAJE_SECRET, 'encaje:' + id) en hex (como CERTIFICADO, decisión 99).
 // Acciones:
-//   descartar  v + m  → guarda el descarte y aprende (empresa al momento; sector a partir de N descartes)
-//   recuperar  v      → borra el descarte: la oferta vuelve a la lista
-//   olvidar    k + val → deja de excluir una empresa o un sector aprendido
-//   ver               → solo enseña la página "Lo que LANOPS ha aprendido de ti"
-// Sin "a": con v → descartar; sin v → ver.
+//   descartar  v [+ m] → guarda el descarte; con motivo, LANOPS puede aprender una regla (opción B + IA, 08-oct)
+//   recuperar  v       → borra el descarte: la oferta vuelve a la lista
+//   olvidar    k + val → quita una regla APRENDIDA (empresa, sector, palabra, municipio o contrato)
+//   ver                → solo enseña la página "Lo que LANOPS ha aprendido de ti"
+// Sin "a": con v → descartar; sin v → ver. El motivo es OPCIONAL: sin motivo (o uno no válido) solo se quita la oferta.
 const MOTIVOS = ['tarea', 'sector', 'empresa', 'salario', 'lejos', 'otro'];
+const CLAVES = ['empresa', 'sector', 'palabra', 'municipio', 'contrato'];
 const j = $input.first().json;
 const q = j.query || {};
 const u = String(q.u || '');
@@ -16,15 +17,15 @@ const firmaOk = /^\d{1,9}$/.test(u) && typeof q.t === 'string'
   && q.t.length === 64 && q.t.toLowerCase() === String(j.firma || '').toLowerCase();
 
 const v = String(q.v || '');
-let accion = String(q.a || (v ? 'descartar' : 'ver'));
+const accion = String(q.a || (v ? 'descartar' : 'ver'));
 let valido = firmaOk;
 let vacante = null, motivo = null, clave = null, valor = null;
 
 if (accion === 'descartar' || accion === 'recuperar') {
   if (/^\d{1,9}$/.test(v)) vacante = Number(v); else valido = false;
-  if (accion === 'descartar') motivo = MOTIVOS.includes(q.m) ? q.m : 'otro';   // sin motivo → "otro" (no aprende nada)
+  if (accion === 'descartar') motivo = MOTIVOS.includes(q.m) ? q.m : null;
 } else if (accion === 'olvidar') {
-  clave = ['empresa', 'sector'].includes(q.k) ? q.k : null;
+  clave = CLAVES.includes(q.k) ? q.k : null;
   valor = typeof q.val === 'string' ? q.val.trim().slice(0, 60) : '';
   if (!clave || !valor) valido = false;
 } else if (accion !== 'ver') {

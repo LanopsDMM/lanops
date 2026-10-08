@@ -9,14 +9,15 @@ const pedir = (r) => (r.banda === 'Alta' || r.banda === 'Media')
   : `<p class="meta">Certificado disponible solo con encaje alto o medio.</p>`;
 // [07-oct] Lanbide no publica la empresa (decisión 96).
 const empresa = (r) => r.fuente === 'lanbide' ? 'Empresa no publicada · oferta gestionada por Lanbide' : r.empresa;
-// [08-oct] Botón "No me interesa" (LANOPS-FEEDBACK, opción B): formulario GET a descartar?u=&t=&a=descartar&v=&m=
+// [08-oct] Botón "No me interesa" (LANOPS-FEEDBACK, opción B + IA): formulario GET a descartar?u=&t=&a=descartar&v=[&m=]
+// Motivo opcional: por defecto "solo quitarla" (no se aprende nada; mejor aprender menos que aprender mal).
 const MOTIVOS = [['tarea', 'lo que se hace en el puesto'], ['sector', 'el sector'], ['empresa', 'la empresa'],
                  ['salario', 'el salario'], ['lejos', 'está lejos'], ['otro', 'otro motivo']];
 const descartar = (r) => `<form method="get" action="descartar" class="descartar">
   <input type="hidden" name="u" value="${esc(q.u)}"><input type="hidden" name="t" value="${esc(q.t)}">
   <input type="hidden" name="a" value="descartar"><input type="hidden" name="v" value="${r.vacante}">
-  <label for="m-${r.vacante}">No me interesa por</label>
-  <select id="m-${r.vacante}" name="m" required><option value="">elige un motivo</option>${MOTIVOS.map(([v, t]) => `<option value="${v}">${t}</option>`).join('')}</select>
+  <label for="m-${r.vacante}">No me interesa · motivo (opcional, nos ayuda a aprender):</label>
+  <select id="m-${r.vacante}" name="m"><option value="">solo quitarla</option>${MOTIVOS.map(([v, t]) => `<option value="${v}">${t}</option>`).join('')}</select>
   <button type="submit">Descartar</button></form>`;
 const aprendido = `<p><a href="descartar?u=${encodeURIComponent(q.u)}&amp;t=${encodeURIComponent(q.t)}&amp;a=ver">Lo que LANOPS ha aprendido de ti</a></p>`;
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
