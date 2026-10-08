@@ -1,0 +1,319 @@
+{
+  "name": "LANOPS-FEEDBACK",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "descartar",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "0c576b9e-4421-45f0-9cee-326bac136e5e",
+      "name": "Webhook /descartar",
+      "webhookId": "0e42685c-cd7b-4ef3-b2ff-ba508597a9a0"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n · workflow LANOPS-ENCAJE · nodo \"Code: firma\"  (sustituye a \"Crypto: firma\", 06-oct)\n// Modo: Run Once for All Items · JavaScript\n// Por qué: en n8n 2.x el nodo Crypto pide el secreto HMAC en una credencial y no admite\n// {{ $env.ENCAJE_SECRET }}. Aquí el secreto se lee de la variable del servicio n8n en Railway\n// (requiere N8N_BLOCK_ENV_ACCESS_IN_NODE=false) y nunca se copia a ningún sitio.\n// Salida: el item del webhook + firma = HMAC-SHA256(ENCAJE_SECRET, 'encaje:' + u) en hex.\n// SHA-256 en JavaScript puro: el Code de n8n no deja usar require('crypto') por defecto.\n\nfunction sha256(bytes) {\n  const K = [0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,\n    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,\n    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,\n    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,\n    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,\n    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,\n    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,\n    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];\n  const H = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];\n  const l = bytes.length, n = ((l + 9 + 63) >> 6) << 6, m = new Uint8Array(n);\n  m.set(bytes); m[l] = 0x80;\n  const bits = l * 8;\n  m[n - 4] = (bits >>> 24) & 255; m[n - 3] = (bits >>> 16) & 255; m[n - 2] = (bits >>> 8) & 255; m[n - 1] = bits & 255;\n  m[n - 5] = Math.floor(bits / 2 ** 32) & 255;\n  const w = new Uint32Array(64), r = (x, s) => (x >>> s) | (x << (32 - s));\n  for (let i = 0; i < n; i += 64) {\n    for (let t = 0; t < 16; t++) w[t] = (m[i+4*t] << 24) | (m[i+4*t+1] << 16) | (m[i+4*t+2] << 8) | m[i+4*t+3];\n    for (let t = 16; t < 64; t++) {\n      const s0 = r(w[t-15], 7) ^ r(w[t-15], 18) ^ (w[t-15] >>> 3);\n      const s1 = r(w[t-2], 17) ^ r(w[t-2], 19) ^ (w[t-2] >>> 10);\n      w[t] = (w[t-16] + s0 + w[t-7] + s1) | 0;\n    }\n    let [a, b, c, d, e, f, g, h] = H;\n    for (let t = 0; t < 64; t++) {\n      const t1 = (h + (r(e, 6) ^ r(e, 11) ^ r(e, 25)) + ((e & f) ^ (~e & g)) + K[t] + w[t]) | 0;\n      const t2 = ((r(a, 2) ^ r(a, 13) ^ r(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) | 0;\n      h = g; g = f; f = e; e = (d + t1) | 0; d = c; c = b; b = a; a = (t1 + t2) | 0;\n    }\n    H[0] = (H[0] + a) | 0; H[1] = (H[1] + b) | 0; H[2] = (H[2] + c) | 0; H[3] = (H[3] + d) | 0;\n    H[4] = (H[4] + e) | 0; H[5] = (H[5] + f) | 0; H[6] = (H[6] + g) | 0; H[7] = (H[7] + h) | 0;\n  }\n  const out = new Uint8Array(32);\n  H.forEach((v, i) => { out[4*i] = v >>> 24; out[4*i+1] = (v >>> 16) & 255; out[4*i+2] = (v >>> 8) & 255; out[4*i+3] = v & 255; });\n  return out;\n}\nconst utf8 = (s) => new TextEncoder().encode(s);\nfunction hmacHex(secreto, mensaje) {\n  let k = utf8(secreto);\n  if (k.length > 64) k = sha256(k);\n  const ki = new Uint8Array(64), ko = new Uint8Array(64);\n  for (let i = 0; i < 64; i++) { ki[i] = (k[i] || 0) ^ 0x36; ko[i] = (k[i] || 0) ^ 0x5c; }\n  const m = utf8(mensaje), interior = new Uint8Array(64 + m.length);\n  interior.set(ki); interior.set(m, 64);\n  const ih = sha256(interior), exterior = new Uint8Array(96);\n  exterior.set(ko); exterior.set(ih, 64);\n  return Array.from(sha256(exterior), (x) => x.toString(16).padStart(2, '0')).join('');\n}\n\nconst secreto = $env.ENCAJE_SECRET;\nif (!secreto) throw new Error('ENCAJE: falta la variable ENCAJE_SECRET en el servicio n8n');\nreturn $input.all().map((item) => {\n  const u = String((item.json.query || {}).u || '');\n  return { json: { ...item.json, firma: hmacHex(secreto, 'encaje:' + u) } };\n});\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "bbd4603d-5142-47f0-9808-9ba5b7f55045",
+      "name": "Code: firma"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n · workflow LANOPS-FEEDBACK · nodo \"Code: entrada\"  (detrás de \"Code: firma\")\n// Modo: Run Once for All Items · JavaScript\n// Comprueba el enlace …/webhook/descartar?u=<id>&t=<firma>&a=<acción>[&v=<vacante>&m=<motivo>][&k=<clave>&val=<valor>]\n// La firma es la MISMA del enlace de ENCAJE: HMAC-SHA256(ENCAJE_SECRET, 'encaje:' + id) en hex (como CERTIFICADO, decisión 99).\n// Acciones:\n//   descartar  v + m  → guarda el descarte y aprende (empresa al momento; sector a partir de N descartes)\n//   recuperar  v      → borra el descarte: la oferta vuelve a la lista\n//   olvidar    k + val → deja de excluir una empresa o un sector aprendido\n//   ver               → solo enseña la página \"Lo que LANOPS ha aprendido de ti\"\n// Sin \"a\": con v → descartar; sin v → ver.\nconst MOTIVOS = ['tarea', 'sector', 'empresa', 'salario', 'lejos', 'otro'];\nconst j = $input.first().json;\nconst q = j.query || {};\nconst u = String(q.u || '');\nconst firmaOk = /^\\d{1,9}$/.test(u) && typeof q.t === 'string'\n  && q.t.length === 64 && q.t.toLowerCase() === String(j.firma || '').toLowerCase();\n\nconst v = String(q.v || '');\nlet accion = String(q.a || (v ? 'descartar' : 'ver'));\nlet valido = firmaOk;\nlet vacante = null, motivo = null, clave = null, valor = null;\n\nif (accion === 'descartar' || accion === 'recuperar') {\n  if (/^\\d{1,9}$/.test(v)) vacante = Number(v); else valido = false;\n  if (accion === 'descartar') motivo = MOTIVOS.includes(q.m) ? q.m : 'otro';   // sin motivo → \"otro\" (no aprende nada)\n} else if (accion === 'olvidar') {\n  clave = ['empresa', 'sector'].includes(q.k) ? q.k : null;\n  valor = typeof q.val === 'string' ? q.val.trim().slice(0, 60) : '';\n  if (!clave || !valor) valido = false;\n} else if (accion !== 'ver') {\n  valido = false;\n}\n\nreturn [{ json: {\n  valido,\n  usuario: valido ? Number(u) : null,\n  t: valido ? q.t.toLowerCase() : null,   // para los enlaces y formularios de la página\n  accion: valido ? accion : null,\n  vacante, motivo, clave, valor,\n}}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        400,
+        0
+      ],
+      "id": "e2fda7c2-0195-4fed-aa25-caa107469876",
+      "name": "Code: entrada"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "60e3103d-aae2-45b4-be03-22fb2d410337",
+              "leftValue": "={{ $json.valido }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        576,
+        0
+      ],
+      "id": "2a65adc0-9b5b-474c-b727-067c4fd8c2e2",
+      "name": "IF firma válida"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "Enlace no válido.",
+        "options": {
+          "responseCode": 403
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        800,
+        96
+      ],
+      "id": "a8f82cce-4224-43bf-bdc8-f51d3afc6874",
+      "name": "Respond 403"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- n8n · workflow LANOPS-FEEDBACK · nodo \"Postgres: aplicar\"\n-- Execute Query · Execute Once ON · Always Output Data ON\n-- Query Parameters: {{ [ JSON.stringify($('Code: entrada').first().json) ] }}\n-- Hace la acción del usuario sobre FEEDBACK (y, en \"olvidar\", sobre PREFERENCIAS) y devuelve UNA fila\n-- que describe qué ha pasado; \"Postgres: aprender\" corre después y ve ya estos cambios.\n--   descartar → INSERT en feedback (veredicto 'descartada', motivo). Recargar no duplica.\n--   recuperar → DELETE del descarte. Devuelve la empresa, el sector y el motivo del descarte borrado\n--               para que \"aprender\" retire lo aprendido que se quede sin apoyo.\n--   olvidar   → DELETE de la exclusión aprendida + motivo = NULL en los descartes que la enseñaron\n--               (siguen descartados, pero ya no cuentan para aprender: no vuelve a aparecer sola).\n--               Solo borra exclusiones que tengan algún descarte detrás (= aprendidas); las que puso\n--               el usuario en su alta no se tocan desde aquí.\n-- \"Aprendida\" no se guarda en ninguna columna (la estructura está congelada, decisión de Pieza 1):\n-- se deduce de los descartes. Lanbide no publica la empresa (decisión 96): sus ofertas nunca enseñan \"empresa\".\nWITH p AS (\n  SELECT * FROM jsonb_to_record($1::jsonb) AS r(\n    usuario int, accion text, vacante int, motivo text, clave text, valor text)),\nvac AS (                     -- la oferta tocada (descartar / recuperar)\n  SELECT v.id, v.puesto, v.fuente, e.nombre AS empresa, e.sector\n  FROM lanops.vacantes v JOIN lanops.empresas e ON e.id = v.empresa\n  JOIN p ON v.id = p.vacante),\nya AS (                      -- ¿ya estaba descartada?\n  SELECT f.id FROM lanops.feedback f JOIN p ON f.usuario = p.usuario AND f.vacante = p.vacante\n  WHERE f.veredicto = 'descartada'),\nins AS (\n  INSERT INTO lanops.feedback (usuario, vacante, veredicto, motivo, fecha)\n  SELECT p.usuario, vac.id, 'descartada', p.motivo, now()\n  FROM p, vac\n  WHERE p.accion = 'descartar' AND NOT EXISTS (SELECT 1 FROM ya)\n  RETURNING id),\nrec AS (\n  DELETE FROM lanops.feedback f USING p\n  WHERE p.accion = 'recuperar' AND f.usuario = p.usuario AND f.vacante = p.vacante\n    AND f.veredicto = 'descartada'\n  RETURNING f.id, f.motivo),\napoyo AS (                   -- descartes que enseñaron la exclusión que se quiere olvidar\n  SELECT f.id FROM lanops.feedback f\n  JOIN p ON f.usuario = p.usuario AND p.accion = 'olvidar'\n  JOIN lanops.vacantes v ON v.id = f.vacante\n  JOIN lanops.empresas e ON e.id = v.empresa\n  WHERE f.veredicto = 'descartada'\n    AND ((p.clave = 'empresa' AND f.motivo = 'empresa' AND v.fuente <> 'lanbide'\n          AND lanops.norm(e.nombre) = lanops.norm(p.valor))\n      OR (p.clave = 'sector' AND f.motivo = 'sector'\n          AND lanops.norm(e.sector) = lanops.norm(p.valor)))),\nolv AS (\n  DELETE FROM lanops.preferencias pr USING p\n  WHERE p.accion = 'olvidar' AND EXISTS (SELECT 1 FROM apoyo)\n    AND pr.usuario = p.usuario AND pr.tipo = 'exclusion' AND pr.clave = p.clave\n    AND lanops.norm(pr.valor) = lanops.norm(p.valor)\n  RETURNING pr.clave, pr.valor),\nsinmotivo AS (\n  UPDATE lanops.feedback f SET motivo = NULL\n  WHERE f.id IN (SELECT id FROM apoyo) AND EXISTS (SELECT 1 FROM olv)\n  RETURNING f.id)\nSELECT p.accion, p.motivo, p.clave, p.valor,\n       vac.id AS vacante, vac.puesto, vac.fuente,\n       CASE WHEN vac.fuente = 'lanbide' THEN 'Empresa no publicada · oferta gestionada por Lanbide'\n            ELSE vac.empresa END AS empresa,\n       CASE WHEN vac.fuente = 'lanbide' THEN NULL ELSE vac.empresa END AS empresa_tocada,\n       vac.sector AS sector_tocado,\n       CASE p.accion\n         WHEN 'descartar' THEN (SELECT count(*) FROM ins) > 0 OR (SELECT count(*) FROM ya) > 0\n         WHEN 'recuperar' THEN (SELECT count(*) FROM rec) > 0\n         WHEN 'olvidar'   THEN (SELECT count(*) FROM olv) > 0\n         ELSE true END AS hecho,\n       (SELECT max(motivo) FROM rec) AS motivo_recuperado,\n       (SELECT count(*) FROM sinmotivo) AS descartes_sin_motivo\nFROM p LEFT JOIN vac ON true;\n",
+        "options": {
+          "queryReplacement": "={{ [ JSON.stringify($('Code: entrada').first().json) ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        800,
+        -96
+      ],
+      "id": "020d8476-9f89-4da6-ab98-e31d4a6d7e6d",
+      "name": "Postgres: aplicar",
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "3RgYPRfrWQzGR0wq",
+          "name": "Postgres LANOPS (marcos)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- n8n · workflow LANOPS-FEEDBACK · nodo \"Postgres: aprender\"\n-- Execute Query · Execute Once ON · Always Output Data ON\n-- Query Parameters:\n--   {{ [ JSON.stringify({ ...$('Postgres: aplicar').first().json, usuario: $('Code: entrada').first().json.usuario }) ] }}\n-- Opción B (08-oct): lo que LANOPS aprende de los descartes, como exclusiones en PREFERENCIAS.\n--   · motivo \"empresa\" → exclusión de esa empresa al primer descarte (salvo Lanbide: no publica la empresa).\n--   · motivo \"sector\"  → exclusión del sector cuando hay CONFIGURACION.descartes_para_excluir_sector\n--                        descartes por sector de ese mismo sector (por defecto 2). Sin sector conocido, no aprende.\n--   · tarea, salario, lejos, otro → solo se guardan.\n-- Tras \"recuperar\" un descarte cuyo motivo era empresa o sector, retira la exclusión de esa empresa / sector\n-- si se ha quedado sin apoyo (por debajo del umbral). Nunca toca exclusiones que el usuario no aprendió aquí.\n-- Devuelve UNA fila: aprendidas [{clave, valor}] y retiradas [{clave, valor}] en esta ejecución.\nWITH p AS (\n  SELECT * FROM jsonb_to_record($1::jsonb) AS r(\n    usuario int, accion text, empresa_tocada text, sector_tocado text, motivo_recuperado text)),\nn AS (\n  SELECT coalesce((SELECT valor::int FROM lanops.configuracion\n                   WHERE clave = 'descartes_para_excluir_sector'), 2) AS umbral),\nd AS (                       -- descartes del usuario con motivo que enseña\n  SELECT f.vacante, f.motivo, v.fuente, e.nombre AS empresa, e.sector\n  FROM lanops.feedback f\n  JOIN p ON f.usuario = p.usuario\n  JOIN lanops.vacantes v ON v.id = f.vacante\n  JOIN lanops.empresas e ON e.id = v.empresa\n  WHERE f.veredicto = 'descartada' AND f.motivo IN ('empresa', 'sector')),\napoyo AS (                   -- lo que hoy está respaldado por descartes\n  SELECT DISTINCT 'empresa' AS clave, left(empresa, 60) AS valor, lanops.norm(empresa) AS k\n  FROM d WHERE motivo = 'empresa' AND fuente <> 'lanbide' AND empresa IS NOT NULL\n  UNION ALL\n  SELECT 'sector', left(min(sector), 60), lanops.norm(sector)\n  FROM d WHERE motivo = 'sector' AND sector IS NOT NULL\n  GROUP BY lanops.norm(sector)\n  HAVING count(DISTINCT vacante) >= (SELECT umbral FROM n)),\nins AS (\n  INSERT INTO lanops.preferencias (usuario, tipo, clave, valor, peso, fecha_mod)\n  SELECT p.usuario, 'exclusion', a.clave, a.valor, NULL, now()\n  FROM apoyo a, p\n  WHERE NOT EXISTS (SELECT 1 FROM lanops.preferencias pr\n                    WHERE pr.usuario = p.usuario AND pr.tipo = 'exclusion' AND pr.clave = a.clave\n                      AND lanops.norm(pr.valor) = a.k)\n  ON CONFLICT DO NOTHING\n  RETURNING clave, valor),\ndel AS (\n  DELETE FROM lanops.preferencias pr USING p\n  WHERE p.accion = 'recuperar' AND pr.usuario = p.usuario AND pr.tipo = 'exclusion'\n    AND ((pr.clave = 'empresa' AND p.motivo_recuperado = 'empresa'\n          AND lanops.norm(pr.valor) = lanops.norm(p.empresa_tocada))\n      OR (pr.clave = 'sector' AND p.motivo_recuperado = 'sector'\n          AND lanops.norm(pr.valor) = lanops.norm(p.sector_tocado)))\n    AND NOT EXISTS (SELECT 1 FROM apoyo a WHERE a.clave = pr.clave AND a.k = lanops.norm(pr.valor))\n  RETURNING pr.clave, pr.valor)\nSELECT (SELECT coalesce(json_agg(json_build_object('clave', clave, 'valor', valor)), '[]') FROM ins) AS aprendidas,\n       (SELECT coalesce(json_agg(json_build_object('clave', clave, 'valor', valor)), '[]') FROM del) AS retiradas;\n",
+        "options": {
+          "queryReplacement": "={{ [ JSON.stringify({ ...$('Postgres: aplicar').first().json, usuario: $('Code: entrada').first().json.usuario }) ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1024,
+        -96
+      ],
+      "id": "8ab0a47f-5616-44de-9fbf-32d465a14705",
+      "name": "Postgres: aprender",
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "3RgYPRfrWQzGR0wq",
+          "name": "Postgres LANOPS (marcos)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "-- n8n · workflow LANOPS-FEEDBACK · nodo \"Postgres: aprendido\"\n-- Execute Query · Execute Once ON · Always Output Data ON\n-- Query Parameters: {{ [ $('Code: entrada').first().json.usuario ] }}\n-- Todo lo que pinta la página \"Lo que LANOPS ha aprendido de ti\", en UNA fila con columnas JSON:\n--   aprendidas  exclusiones de empresa/sector con descartes detrás (se pueden deshacer)\n--   en_camino   sectores con algún descarte por sector que aún no llegan al umbral\n--   descartes   ofertas descartadas (se pueden recuperar); oculta = sigue fuera por una exclusión\n--   perfil      el resto de PREFERENCIAS (lo que puso el usuario en su alta), solo para consultarlo\nWITH n AS (\n  SELECT coalesce((SELECT valor::int FROM lanops.configuracion\n                   WHERE clave = 'descartes_para_excluir_sector'), 2) AS umbral),\nd AS (\n  SELECT f.vacante, f.motivo, f.fecha, v.puesto, v.fuente, v.ubicacion, v.contrato, e.nombre AS empresa, e.sector,\n         lanops.norm(e.nombre) AS emp, lanops.norm(e.sector) AS sec, lanops.norm(v.ubicacion) AS ubic,\n         lanops.norm(coalesce(v.puesto, '') || ' ' || coalesce(v.requisitos, '')) AS texto\n  FROM lanops.feedback f\n  JOIN lanops.vacantes v ON v.id = f.vacante\n  JOIN lanops.empresas e ON e.id = v.empresa\n  WHERE f.usuario = $1 AND f.veredicto = 'descartada'),\nex AS (\n  SELECT id, clave, valor, lanops.norm(valor) AS k, fecha_mod FROM lanops.preferencias\n  WHERE usuario = $1 AND tipo = 'exclusion'),\napr AS (                     -- exclusiones aprendidas = con algún descarte que las respalde\n  SELECT ex.clave, ex.valor, ex.fecha_mod,\n         (SELECT count(DISTINCT d.vacante) FROM d\n          WHERE (ex.clave = 'empresa' AND d.motivo = 'empresa' AND d.fuente <> 'lanbide' AND d.emp = ex.k)\n             OR (ex.clave = 'sector'  AND d.motivo = 'sector'  AND d.sec = ex.k)) AS descartes\n  FROM ex WHERE ex.clave IN ('empresa', 'sector'))\nSELECT\n  (SELECT umbral FROM n) AS umbral,\n  (SELECT coalesce(json_agg(json_build_object('clave', clave, 'valor', valor, 'descartes', descartes,\n                                              'desde', to_char(fecha_mod, 'YYYY-MM-DD')) ORDER BY clave, valor), '[]')\n   FROM apr WHERE descartes > 0) AS aprendidas,\n  (SELECT coalesce(json_agg(json_build_object('valor', s.valor, 'descartes', s.c,\n                                              'faltan', (SELECT umbral FROM n) - s.c) ORDER BY s.valor), '[]')\n   FROM (SELECT min(sector) AS valor, sec, count(DISTINCT vacante) AS c FROM d\n         WHERE motivo = 'sector' AND sector IS NOT NULL GROUP BY sec) s\n   WHERE s.c < (SELECT umbral FROM n)\n     AND NOT EXISTS (SELECT 1 FROM ex WHERE ex.clave = 'sector' AND ex.k = s.sec)) AS en_camino,\n  (SELECT coalesce(json_agg(json_build_object(\n            'vacante', d.vacante, 'puesto', d.puesto,\n            'empresa', CASE WHEN d.fuente = 'lanbide' THEN 'Empresa no publicada · oferta gestionada por Lanbide' ELSE d.empresa END,\n            'sector', d.sector, 'motivo', d.motivo, 'fecha', to_char(d.fecha, 'YYYY-MM-DD'),\n            'oculta', EXISTS (SELECT 1 FROM ex WHERE                        -- mismas reglas que el prefiltro de ENCAJE\n                         (ex.clave = 'empresa'   AND d.emp = ex.k)\n                      OR (ex.clave = 'palabra'   AND d.texto LIKE '%' || ex.k || '%')\n                      OR (ex.clave = 'sector'    AND d.sec LIKE '%' || ex.k || '%')\n                      OR (ex.clave = 'municipio' AND d.ubic LIKE '%' || ex.k || '%')\n                      OR (ex.clave = 'contrato'  AND d.contrato = ex.k)))\n          ORDER BY d.fecha DESC, d.vacante DESC), '[]')\n   FROM (SELECT * FROM d ORDER BY fecha DESC LIMIT 50) d) AS descartes,\n  (SELECT coalesce(json_agg(json_build_object('tipo', pr.tipo, 'clave', pr.clave, 'valor', pr.valor, 'peso', pr.peso)\n                            ORDER BY CASE pr.tipo WHEN 'duro' THEN 1 WHEN 'peso' THEN 2 ELSE 3 END, pr.peso DESC NULLS LAST, pr.clave), '[]')\n   FROM lanops.preferencias pr\n   WHERE pr.usuario = $1\n     AND NOT EXISTS (SELECT 1 FROM apr WHERE apr.descartes > 0 AND pr.tipo = 'exclusion'\n                     AND apr.clave = pr.clave AND apr.valor = pr.valor)) AS perfil;\n",
+        "options": {
+          "queryReplacement": "={{ [ $('Code: entrada').first().json.usuario ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1248,
+        -96
+      ],
+      "id": "d92721fc-3e51-4b8a-a46a-b63bec45f407",
+      "name": "Postgres: aprendido",
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "3RgYPRfrWQzGR0wq",
+          "name": "Postgres LANOPS (marcos)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n · workflow LANOPS-FEEDBACK · nodo \"Code: HTML\"  (detrás de \"Postgres: aprendido\")\n// Modo: Run Once for All Items · JavaScript\n// Página \"Lo que LANOPS ha aprendido de ti\": mensaje de la acción + lo aprendido (deshacer) + descartes (recuperar)\n// + perfil de búsqueda (solo consulta). Usa $('Code: entrada'), $('Postgres: aplicar') y $('Postgres: aprender'):\n// **los nombres de esos nodos deben ser exactos**. Accesible (decisión 21): HTML semántico, formularios con\n// etiqueta, mensaje en role=\"status\", nada depende solo del color. Sin JavaScript en la página.\nconst CORREGIR_PERFIL = 'Si algún dato no es correcto, dínoslo y lo corregimos.';   // [08-oct] texto provisional\n\nconst e = $('Code: entrada').first().json;\nconst a = $('Postgres: aplicar').first().json || {};\nconst ap = $('Postgres: aprender').first().json || {};\nconst st = $input.first().json || {};\nconst json = (x) => (typeof x === 'string' ? JSON.parse(x) : (x || []));\nconst aprendidas = json(st.aprendidas), enCamino = json(st.en_camino), descartes = json(st.descartes), perfil = json(st.perfil);\nconst nuevas = json(ap.aprendidas), retiradas = json(ap.retiradas);\nconst umbral = Number(st.umbral) || 2;\n\nconst esc = (s) => String(s ?? '').replace(/[&<>\"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' }[c]));\nconst norm = (s) => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();\nconst fecha = (f) => (f ? f.split('-').reverse().join('/') : '');\nconst MOTIVO = { tarea: 'lo que se hace en el puesto', sector: 'el sector', empresa: 'la empresa',\n                 salario: 'el salario', lejos: 'está lejos', otro: 'otro motivo' };\nconst motivo = (m) => (m ? MOTIVO[m] || m : 'sin motivo');\nconst QUE = (c, v) => (c === 'empresa' ? `la empresa <strong>${esc(v)}</strong>` : `el sector <strong>${esc(v)}</strong>`);\nconst DE = (c, v) => (c === 'empresa' ? `de la empresa <strong>${esc(v)}</strong>` : `del sector <strong>${esc(v)}</strong>`);\nconst CLAVE = { municipio: 'Municipio', radio_km: 'Distancia máxima (km)', jornada: 'Jornada', contrato: 'Contrato',\n  salario_min: 'Salario mínimo', modalidad: 'Modalidad', fecha_inicio_max: 'Incorporación antes de', permiso_trabajo: 'Permiso de trabajo',\n  euskera: 'Euskera', sector: 'Sector', tamano: 'Tamaño de empresa', idioma: 'Idioma', estabilidad: 'Estabilidad', ett: 'ETT',\n  palabra: 'Palabra', empresa: 'Empresa', movilidad: 'Movilidad', turnos: 'Turnos', puesto_objetivo: 'Puesto que buscas',\n  situacion_actual: 'Situación actual' };\nconst TIPO = (p) => (p.tipo === 'duro' ? 'No negociable' : p.tipo === 'peso' ? `Importante (${p.peso}/5)` : 'Excluyes');\nconst oculto = (r) => [...aprendidas, ...perfil.filter(p => p.tipo === 'exclusion')].some(x =>\n  (x.clave === 'empresa' && r.empresa_tocada && norm(x.valor) === norm(r.empresa_tocada)) ||\n  (x.clave === 'sector' && r.sector_tocado && norm(r.sector_tocado).includes(norm(x.valor))));\n\n// Formularios: GET al mismo webhook (relativo: vale en la Test URL y en la Production URL)\nconst ocultos = `<input type=\"hidden\" name=\"u\" value=\"${esc(e.usuario)}\"><input type=\"hidden\" name=\"t\" value=\"${esc(e.t)}\">`;\nconst formRecuperar = (r) => `<form method=\"get\" action=\"descartar\">${ocultos}\n  <input type=\"hidden\" name=\"a\" value=\"recuperar\"><input type=\"hidden\" name=\"v\" value=\"${esc(r.vacante)}\">\n  <button type=\"submit\">Recuperar esta oferta</button></form>`;\nconst formOlvidar = (x) => `<form method=\"get\" action=\"descartar\">${ocultos}\n  <input type=\"hidden\" name=\"a\" value=\"olvidar\"><input type=\"hidden\" name=\"k\" value=\"${esc(x.clave)}\">\n  <input type=\"hidden\" name=\"val\" value=\"${esc(x.valor)}\">\n  <button type=\"submit\">Dejar de excluir ${x.clave === 'empresa' ? 'esta empresa' : 'este sector'}</button></form>`;\n\n// 1. Qué ha pasado\nconst msg = [];\nif (e.accion === 'descartar') {\n  if (!a.hecho) msg.push('Esa oferta no existe.');\n  else {\n    msg.push(`Has descartado «${esc(a.puesto)}» (${esc(a.empresa)}) por ${esc(motivo(a.motivo))}. No volverá a salir en tu lista.`);\n    for (const x of nuevas) msg.push(x.clave === 'empresa'\n      ? `<strong>Hemos aprendido:</strong> desde ahora no te enseñaremos ofertas ${DE('empresa', x.valor)}.`\n      : `<strong>Hemos aprendido:</strong> llevas ${umbral} o más ofertas descartadas por el sector ${esc(x.valor)}; desde ahora no te enseñaremos ofertas de ese sector.`);\n    if (a.motivo === 'empresa' && a.fuente === 'lanbide')\n      msg.push('Lanbide no publica el nombre de la empresa, así que no podemos dejar de enseñártela. Tu motivo queda guardado.');\n    if (a.motivo === 'sector' && !a.sector_tocado)\n      msg.push('No sabemos el sector de esta empresa, así que no podemos aprender de este descarte. Tu motivo queda guardado.');\n    const c = enCamino.find(s => a.sector_tocado && norm(s.valor) === norm(a.sector_tocado));\n    if (a.motivo === 'sector' && c)\n      msg.push(`Si descartas ${c.faltan === 1 ? 'una oferta más' : c.faltan + ' ofertas más'} del sector ${esc(c.valor)} por el sector, dejaremos de enseñarte ese sector.`);\n  }\n} else if (e.accion === 'recuperar') {\n  if (!a.hecho) msg.push('Esa oferta no estaba entre tus descartes.');\n  else {\n    for (const x of retiradas) msg.push(`Ya no excluimos ${QUE(x.clave, x.valor)}: no quedan descartes que lo justifiquen.`);\n    msg.unshift(oculto(a)\n      ? `«${esc(a.puesto)}» ya no está entre tus descartes, pero no la verás en tu lista mientras excluyas su empresa o su sector (más abajo puedes dejar de excluirlos).`\n      : `«${esc(a.puesto)}» vuelve a tu lista.`);\n  }\n} else if (e.accion === 'olvidar') {\n  msg.push(a.hecho\n    ? `Ya no excluimos ${QUE(a.clave, a.valor)}. Las ofertas que descartaste por eso siguen descartadas; si quieres verlas, recupéralas abajo.`\n    : 'No había nada aprendido con ese nombre.');\n}\n\n// 2. Secciones\nconst liAprendida = (x) => `<li>No te enseñamos ofertas ${DE(x.clave, x.valor)}.\n  <span class=\"meta\">Lo aprendimos de ${x.descartes === 1 ? '1 descarte' : x.descartes + ' descartes'} · desde el ${fecha(x.desde)}.</span>\n  ${formOlvidar(x)}</li>`;\nconst liCamino = (s) => `<li>Sector ${esc(s.valor)}: ${s.descartes} de ${umbral} descartes por el sector.</li>`;\nconst liDescarte = (r) => `<li class=\"vac\"><h3>${esc(r.puesto)}</h3>\n  <p class=\"meta\">${esc(r.empresa)}${r.sector ? ' · sector ' + esc(r.sector) : ''} · descartada el ${fecha(r.fecha)} ${r.motivo ? 'por ' + esc(motivo(r.motivo)) : 'sin motivo'}</p>\n  ${r.oculta ? '<p class=\"meta\">Aunque la recuperes, no la verás mientras excluyas su empresa o su sector.</p>' : ''}\n  ${formRecuperar(r)}</li>`;\nconst liPerfil = (p) => `<li>${TIPO(p)} · ${esc(CLAVE[p.clave] || p.clave)}: <strong>${esc(String(p.valor).replace(/_/g, ' '))}</strong></li>`;\nconst volver = `<p><a href=\"encaje?u=${encodeURIComponent(e.usuario)}&amp;t=${encodeURIComponent(e.t)}\">Volver a tu lista de vacantes</a></p>`;\n\nconst html = `<!doctype html>\n<html lang=\"es\"><head><meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<meta name=\"robots\" content=\"noindex\">\n<title>Lo que LANOPS ha aprendido de ti</title>\n<style>\n body{font-family:system-ui,-apple-system,\"Segoe UI\",sans-serif;max-width:46rem;margin:0 auto;padding:1rem;line-height:1.5;color:#1a1a1a;background:#fff}\n h1{font-size:1.6rem} h2{font-size:1.25rem;margin-top:2rem} h3{font-size:1.05rem;margin:.2rem 0}\n ul{padding-left:1.2rem} .vacs{list-style:none;padding:0} .vac{border:1px solid #888;border-radius:.5rem;padding:.8rem 1rem;margin:0 0 .8rem}\n .meta{color:#444;margin:.2rem 0} form{margin:.4rem 0 .8rem}\n .aviso{border-left:4px solid #0b4fa8;background:#eef4fc;padding:.6rem 1rem;margin:1rem 0}\n a{color:#0b4fa8} a:focus,button:focus{outline:3px solid #0b4fa8;outline-offset:2px}\n button{font:inherit;padding:.3rem .8rem;border:2px solid #0b4fa8;border-radius:.4rem;background:#fff;color:#0b4fa8;cursor:pointer}\n footer{font-size:.85rem;color:#444;border-top:1px solid #ccc;margin-top:2rem;padding-top:.5rem}\n</style></head><body>\n<header><h1>Lo que LANOPS ha aprendido de ti</h1>${volver}</header>\n<main>\n${msg.length ? `<div class=\"aviso\" role=\"status\">${msg.map(m => `<p>${m}</p>`).join('')}</div>` : ''}\n<p>LANOPS aprende de tus descartes con dos reglas, y aquí puedes deshacer lo que aprende:\nsi descartas una oferta por <em>la empresa</em>, dejamos de enseñarte esa empresa; si descartas ${umbral} ofertas\ndel mismo sector por <em>el sector</em>, dejamos de enseñarte ese sector. El resto de motivos se guardan, pero no cambian tu lista.</p>\n\n<h2>Lo que hemos aprendido</h2>\n${aprendidas.length ? `<ul>${aprendidas.map(liAprendida).join('')}</ul>` : '<p>Todavía nada.</p>'}\n${enCamino.length ? `<h2>A punto de aprender</h2><ul>${enCamino.map(liCamino).join('')}</ul>` : ''}\n\n<h2>Ofertas que has descartado</h2>\n${descartes.length ? `<ul class=\"vacs\">${descartes.map(liDescarte).join('')}</ul>` : '<p>No has descartado ninguna oferta.</p>'}\n\n<h2>Tu perfil de búsqueda</h2>\n<p>Lo que nos dijiste al darte de alta. ${esc(CORREGIR_PERFIL)}</p>\n${perfil.length ? `<ul>${perfil.map(liPerfil).join('')}</ul>` : '<p>No has indicado preferencias.</p>'}\n</main>\n<footer><p>La IA evalúa cada oferta; tú decides. Lo que aprende LANOPS de tus descartes son reglas a la vista que puedes deshacer.</p></footer>\n</body></html>`;\nreturn [{ json: { html, status: 200 } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1472,
+        -96
+      ],
+      "id": "b171023c-8ed9-4ba2-90a6-0f9e2983686e",
+      "name": "Code: HTML"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseCode": "={{ $json.status }}",
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1696,
+        -96
+      ],
+      "id": "9102ad00-c660-4339-8164-bd5c62a57e26",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook /descartar": {
+      "main": [
+        [
+          {
+            "node": "Code: firma",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: firma": {
+      "main": [
+        [
+          {
+            "node": "Code: entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres: aplicar": {
+      "main": [
+        [
+          {
+            "node": "Postgres: aprender",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres: aprender": {
+      "main": [
+        [
+          {
+            "node": "Postgres: aprendido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres: aprendido": {
+      "main": [
+        [
+          {
+            "node": "Code: HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: HTML": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: entrada": {
+      "main": [
+        [
+          {
+            "node": "IF firma válida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF firma válida": {
+      "main": [
+        [
+          {
+            "node": "Postgres: aplicar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 403",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "tags": []
+}

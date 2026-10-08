@@ -9,6 +9,16 @@ const pedir = (r) => (r.banda === 'Alta' || r.banda === 'Media')
   : `<p class="meta">Certificado disponible solo con encaje alto o medio.</p>`;
 // [07-oct] Lanbide no publica la empresa (decisión 96).
 const empresa = (r) => r.fuente === 'lanbide' ? 'Empresa no publicada · oferta gestionada por Lanbide' : r.empresa;
+// [08-oct] Botón "No me interesa" (LANOPS-FEEDBACK, opción B): formulario GET a descartar?u=&t=&a=descartar&v=&m=
+const MOTIVOS = [['tarea', 'lo que se hace en el puesto'], ['sector', 'el sector'], ['empresa', 'la empresa'],
+                 ['salario', 'el salario'], ['lejos', 'está lejos'], ['otro', 'otro motivo']];
+const descartar = (r) => `<form method="get" action="descartar" class="descartar">
+  <input type="hidden" name="u" value="${esc(q.u)}"><input type="hidden" name="t" value="${esc(q.t)}">
+  <input type="hidden" name="a" value="descartar"><input type="hidden" name="v" value="${r.vacante}">
+  <label for="m-${r.vacante}">No me interesa por</label>
+  <select id="m-${r.vacante}" name="m" required><option value="">elige un motivo</option>${MOTIVOS.map(([v, t]) => `<option value="${v}">${t}</option>`).join('')}</select>
+  <button type="submit">Descartar</button></form>`;
+const aprendido = `<p><a href="descartar?u=${encodeURIComponent(q.u)}&amp;t=${encodeURIComponent(q.t)}&amp;a=ver">Lo que LANOPS ha aprendido de ti</a></p>`;
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const nota = (g) => Number(g).toFixed(1).replace('.', ',');
 const pct = (g) => Math.round(Number(g) * 20);           // decisión 26: % = global × 20
@@ -25,6 +35,7 @@ const tarjeta = (r, n) => `
   ${r.hueco ? `<p><strong>Para subir un punto:</strong> ${esc(r.hueco)}</p>` : ''}
   ${r.url_origen ? `<p><a href="${esc(r.url_origen)}" rel="noopener">Ver la oferta original${r.fuente === 'lanbide' ? ' en Lanbide' : ''}</a></p>` : ''}
   ${pedir(r)}
+  ${descartar(r)}
 </li>`;
 
 const html = `<!doctype html>
@@ -37,11 +48,14 @@ const html = `<!doctype html>
  ol{list-style:none;padding:0} .vac{border:1px solid #888;border-radius:.5rem;padding:1rem;margin:0 0 1rem}
  .meta{color:#444;margin:0} .nota{font-size:1.1rem} .dims{padding-left:1.2rem;margin:.3rem 0}
  a{color:#0b4fa8} a:focus{outline:3px solid #0b4fa8;outline-offset:2px}
+ .descartar{margin:.5rem 0 0} .descartar select,.descartar button{font:inherit;margin-left:.3rem}
+ .descartar button{padding:.25rem .7rem;border:2px solid #0b4fa8;border-radius:.4rem;background:#fff;color:#0b4fa8;cursor:pointer}
+ button:focus,select:focus{outline:3px solid #0b4fa8;outline-offset:2px}
  .boton{display:inline-block;padding:.4rem .9rem;border:2px solid #0b4fa8;border-radius:.4rem;background:#0b4fa8;color:#fff;text-decoration:none}
  footer{font-size:.85rem;color:#444;border-top:1px solid #ccc;margin-top:2rem;padding-top:.5rem}
 </style></head><body>
 <header><h1>Tus vacantes con más encaje</h1>
-<p>${filas.length ? `${filas.length} vacantes abiertas, ordenadas por lo que tú priorizas.` : 'Todavía no hay vacantes evaluadas para ti. Vuelve en unos minutos.'}</p></header>
+<p>${filas.length ? `${filas.length} vacantes abiertas, ordenadas por lo que tú priorizas.` : 'Todavía no hay vacantes evaluadas para ti. Vuelve en unos minutos.'}</p>${aprendido}</header>
 <main><ol>${filas.map((r, i) => tarjeta(r, i + 1)).join('')}</ol></main>
 <footer><p>La IA evalúa; tú decides. Puntuación con la rúbrica abierta de career-ops (MIT). Ofertas de Lanbide: Fuente Lanbide / Open Data Euskadi (CC BY).</p></footer>
 </body></html>`;
