@@ -9,16 +9,21 @@ const pedir = (r) => (r.banda === 'Alta' || r.banda === 'Media')
   : `<p class="meta">Certificado disponible solo con encaje alto o medio.</p>`;
 // [07-oct] Lanbide no publica la empresa (decisión 96).
 const empresa = (r) => r.fuente === 'lanbide' ? 'Empresa no publicada · oferta gestionada por Lanbide' : r.empresa;
-// [08-oct] Botón "No me interesa" (LANOPS-FEEDBACK, opción B + IA): formulario GET a descartar?u=&t=&a=descartar&v=[&m=]
-// Motivo opcional: por defecto "solo quitarla" (no se aprende nada; mejor aprender menos que aprender mal).
+// [08-oct] Botón "No me interesa" (LANOPS-FEEDBACK, opción B + IA): formulario GET a descartar?u=&t=&a=descartar&v=[&m=][&x=]
+// Motivo con "solo quitarla" por defecto (no se aprende nada; mejor aprender menos que aprender mal).
+// "x" = el porqué en palabras del usuario (≤ 200): lo lee la IA y no va a ninguna tabla (FEEDBACK no guarda sus ejecuciones
+// correctas en n8n). Va dentro de <details> (sin JavaScript).
 const MOTIVOS = [['tarea', 'lo que se hace en el puesto'], ['sector', 'el sector'], ['empresa', 'la empresa'],
-                 ['salario', 'el salario'], ['lejos', 'está lejos'], ['otro', 'otro motivo']];
-const descartar = (r) => `<form method="get" action="descartar" class="descartar">
+                 ['salario', 'el salario'], ['lejos', 'está lejos'], ['otro', 'otro motivo (cuéntanos abajo)']];
+const descartar = (r) => `<details class="descartar"><summary>No me interesa</summary>
+  <form method="get" action="descartar">
   <input type="hidden" name="u" value="${esc(q.u)}"><input type="hidden" name="t" value="${esc(q.t)}">
   <input type="hidden" name="a" value="descartar"><input type="hidden" name="v" value="${r.vacante}">
-  <label for="m-${r.vacante}">No me interesa · motivo (opcional, nos ayuda a aprender):</label>
-  <select id="m-${r.vacante}" name="m"><option value="">solo quitarla</option>${MOTIVOS.map(([v, t]) => `<option value="${v}">${t}</option>`).join('')}</select>
-  <button type="submit">Descartar</button></form>`;
+  <p><label for="m-${r.vacante}">Motivo:</label>
+  <select id="m-${r.vacante}" name="m"><option value="">solo quitarla</option>${MOTIVOS.map(([v, t]) => `<option value="${v}">${t}</option>`).join('')}</select></p>
+  <p><label for="x-${r.vacante}">Cuéntanos por qué, si quieres (la IA lo lee para aprender; no se guarda en tu perfil):</label><br>
+  <input type="text" id="x-${r.vacante}" name="x" maxlength="200" size="40"></p>
+  <p><button type="submit">Descartar</button></p></form></details>`;
 const aprendido = `<p><a href="descartar?u=${encodeURIComponent(q.u)}&amp;t=${encodeURIComponent(q.t)}&amp;a=ver">Lo que LANOPS ha aprendido de ti</a></p>`;
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const nota = (g) => Number(g).toFixed(1).replace('.', ',');
@@ -49,7 +54,9 @@ const html = `<!doctype html>
  ol{list-style:none;padding:0} .vac{border:1px solid #888;border-radius:.5rem;padding:1rem;margin:0 0 1rem}
  .meta{color:#444;margin:0} .nota{font-size:1.1rem} .dims{padding-left:1.2rem;margin:.3rem 0}
  a{color:#0b4fa8} a:focus{outline:3px solid #0b4fa8;outline-offset:2px}
- .descartar{margin:.5rem 0 0} .descartar select,.descartar button{font:inherit;margin-left:.3rem}
+ .descartar{margin:.5rem 0 0} .descartar summary{cursor:pointer;color:#0b4fa8} .descartar p{margin:.4rem 0}
+ .descartar select,.descartar input,.descartar button{font:inherit} .descartar input{max-width:100%}
+ summary:focus,input:focus{outline:3px solid #0b4fa8;outline-offset:2px}
  .descartar button{padding:.25rem .7rem;border:2px solid #0b4fa8;border-radius:.4rem;background:#fff;color:#0b4fa8;cursor:pointer}
  button:focus,select:focus{outline:3px solid #0b4fa8;outline-offset:2px}
  .boton{display:inline-block;padding:.4rem .9rem;border:2px solid #0b4fa8;border-radius:.4rem;background:#0b4fa8;color:#fff;text-decoration:none}

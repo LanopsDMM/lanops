@@ -8,17 +8,21 @@ y el perfil del alta (solo consulta: se cambia en el alta, Pieza 6).
 
 Estado: **[08-oct-2026] `probado en simulación`** (Postgres 16 local con `data/schema.sql`, datos sintéticos, las 24 empresas,
 la persona demo y ofertas de prueba tipo Lanbide; nodos Code y Postgres ejecutados tal cual con un simulador de n8n y respuestas
-de Claude simuladas; 51 comprobaciones; páginas abiertas en Chromium). Falta montarlo en n8n y probar con el modelo real.
+de Claude simuladas; 60 comprobaciones; páginas abiertas en Chromium). Falta montarlo en n8n y probar con el modelo real.
 
 ## Reglas
 - **Motivo opcional.** Por defecto "solo quitarla": se guarda el descarte con `motivo = NULL` y no se aprende nada
   (mejor aprender menos que aprender mal por inercia). Motivos: `tarea` · `sector` · `empresa` · `salario` · `lejos` · `otro`.
+- **El porqué en palabras del usuario** (campo `x`, ≤ 200 caracteres, opcional; escribirlo sin motivo cuenta como `otro`).
+  Lo lee la IA como dato (nunca como instrucción) y no va a ninguna tabla. Para que tampoco quede en n8n, el workflow tiene
+  **Settings → Save successful production executions = Do not save** (las ejecuciones con error sí se guardan, para depurar,
+  y ahí sí aparecería el texto). La API de Claude lo recibe para responder. `otro` sin texto no llama a la IA.
 - **Reglas fijas (opción B), sin IA:**
   - `empresa` → excluye esa empresa al primer descarte.
   - `sector` → excluye el sector con `descartes_para_excluir_sector` (CONFIGURACION, 2) descartes por sector del mismo sector.
 - **IA** (`Code: preparar IA` → `HTTP Request: Claude` → `Code: leer regla`), solo en descartes nuevos con motivo que las reglas fijas no cubren:
-  `tarea`, `salario`, `lejos`, `otro`; `sector` sin sector conocido; `empresa` de Lanbide (no publica la empresa, decisión 96).
-  Claude lee la oferta, el motivo y el perfil de búsqueda (sin el CV) y propone **como mucho una** regla: `palabra` (aparece en la oferta),
+  `tarea`, `salario`, `lejos`, `otro` con texto; `sector` sin sector conocido; `empresa` de Lanbide (no publica la empresa, decisión 96).
+  Claude lee la oferta, el motivo, el porqué del usuario si lo hay y el perfil de búsqueda (sin el CV) y propone **como mucho una** regla: `palabra` (aparece en la oferta),
   `municipio` (solo con "está lejos") o `contrato`, con una frase de porqué para el usuario. Modelo = el del evaluador IA activo.
   **`Code: leer regla` valida** antes de guardar (palabra genérica, que no está en la oferta, que choca con lo que busca el usuario,
   su municipio o contrato no negociable, clave no permitida, JSON roto o error de la API → no se aprende nada y el descarte queda guardado).
@@ -33,7 +37,7 @@ de Claude simuladas; 51 comprobaciones; páginas abiertas en Chromium). Falta mo
 
 ## Enlace
 `…/webhook/descartar?u=<id>&t=<firma>&a=<acción>` con la **misma firma** que el enlace de ENCAJE (`encaje:<id>`, como CERTIFICADO).
-`a=descartar&v=<vacante>[&m=<motivo>]` · `a=recuperar&v=<vacante>` · `a=olvidar&k=empresa|sector|palabra|municipio|contrato&val=<valor>` · `a=ver`.
+`a=descartar&v=<vacante>[&m=<motivo>][&x=<porqué>]` · `a=recuperar&v=<vacante>` · `a=olvidar&k=empresa|sector|palabra|municipio|contrato&val=<valor>` · `a=ver`.
 Sin `a`: con `v` descarta; sin `v`, enseña la página. Firma o parámetros malos → 403.
 
 ## Requisitos
@@ -60,7 +64,7 @@ Sin `a`: con `v` descarta; sin `v`, enseña la página. Firma o parámetros malo
 
 `workflow.json` trae los nodos ya configurados: se importa en n8n. `comprobar.sql`: consulta read-only de descartes y reglas de un usuario.
 
-Probado en simulación (8-oct, 51 comprobaciones): 403 con firma de otro usuario, sin firma, `v` no numérico, acción y clave no permitidas;
+Probado en simulación (8-oct, 60 comprobaciones; texto libre: "otro" sin texto no llama a la IA, solo texto = "otro", texto limpio y recortado a 200, intento de dar órdenes a la IA parado por la validación, el texto no llega a la base de datos): 403 con firma de otro usuario, sin firma, `v` no numérico, acción y clave no permitidas;
 sin motivo (no aprende ni llama a la IA; recargar no duplica); empresa y sector (sin IA; quitar el sector no se reaprende; una exclusión
 del alta no se puede quitar; recuperar retira la de empresa); IA con ofertas tipo Lanbide (petición con oferta, motivo y perfil, sin CV;
 palabra aprendida, la otra oferta parecida sale de la lista; recargar no vuelve a llamar); validación (palabra genérica o ausente,
