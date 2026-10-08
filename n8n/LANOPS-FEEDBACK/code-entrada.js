@@ -8,7 +8,7 @@
 //   olvidar    k + val → quita una regla APRENDIDA (empresa, sector, palabra, municipio o contrato)
 //   ver                → solo enseña la página "Lo que LANOPS ha aprendido de ti"
 // Sin "a": con v → descartar; sin v → ver. El motivo es OPCIONAL: sin motivo (o uno no válido) solo se quita la oferta.
-// x = el porqué en palabras del usuario: solo con "otro motivo" y obligatorio (sin él → accion "falta_porque", no se descarta).
+// x = el porqué en palabras del usuario: con cualquier motivo; obligatorio con "otro" (sin él → accion "falta_porque", no se descarta).
 const MOTIVOS = ['tarea', 'sector', 'empresa', 'salario', 'lejos', 'otro'];
 const CLAVES = ['empresa', 'sector', 'palabra', 'municipio', 'contrato'];
 const j = $input.first().json;
@@ -26,12 +26,10 @@ if (accion === 'descartar' || accion === 'recuperar') {
   if (/^\d{1,9}$/.test(v)) vacante = Number(v); else valido = false;
   if (accion === 'descartar') {
     motivo = MOTIVOS.includes(q.m) ? q.m : null;
-    // El porqué en palabras del usuario: SOLO con "otro motivo", y entonces obligatorio. ≤ 200 caracteres,
-    // sin saltos ni caracteres de control. NO se guarda. Con cualquier otro motivo se ignora.
-    if (motivo === 'otro') {
-      texto = typeof q.x === 'string' ? q.x.replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200) : '';
-      if (!texto) accion = 'falta_porque';   // no se descarta: la página pide el porqué
-    }
+    // El porqué en palabras del usuario (08-oct): con cualquier motivo, y OBLIGATORIO con "otro motivo".
+    // ≤ 200 caracteres, sin saltos ni caracteres de control. NO se guarda. Sin motivo ("solo quitarla") se ignora.
+    if (motivo) texto = typeof q.x === 'string' ? q.x.replace(/[\u0000-\u001f\u007f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 200) : '';
+    if (motivo === 'otro' && !texto) accion = 'falta_porque';   // no se descarta: la página pide el porqué
   }
 } else if (accion === 'olvidar') {
   clave = CLAVES.includes(q.k) ? q.k : null;

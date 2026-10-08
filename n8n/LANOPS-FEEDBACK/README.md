@@ -1,22 +1,29 @@
 # LANOPS-FEEDBACK (n8n)
 
 Lo que LANOPS aprende de los descartes (Pieza 5, dueño Marcos; 08-oct-2026: opción B + IA, sin tocar pesos).
-En cada tarjeta de la lista de ENCAJE hay un formulario **"No me interesa · motivo (opcional) · Descartar"**: la oferta sale
+En cada tarjeta de la lista de ENCAJE hay un desplegable **"No me interesa"** (motivo, con "solo quitarla" por defecto; "Cuéntanos por qué"; Descartar): la oferta sale
 de la lista y, si hay motivo, LANOPS puede aprender una regla de exclusión. La página **"Lo que LANOPS ha aprendido de ti"**
 enseña las reglas aprendidas (con cuántas ofertas esconden y un botón para quitarlas), los descartes (para recuperarlos)
 y el perfil del alta (solo consulta: se cambia en el alta, Pieza 6).
 
-Estado: **[08-oct-2026] `probado en simulación`** (Postgres 16 local con `data/schema.sql`, datos sintéticos, las 24 empresas,
-la persona demo y ofertas de prueba tipo Lanbide; nodos Code y Postgres ejecutados tal cual con un simulador de n8n y respuestas
-de Claude simuladas; 63 comprobaciones; páginas abiertas en Chromium). Falta montarlo en n8n y probar con el modelo real.
+Estado: **[08-oct-2026] `probado en real`** y publicado. Antes, `probado en simulación` (Postgres 16 local con `data/schema.sql`,
+datos sintéticos, las 24 empresas, la persona demo y ofertas tipo Lanbide; nodos ejecutados tal cual con un simulador de n8n y
+respuestas de Claude simuladas; 65 comprobaciones; páginas abiertas en Chromium).
+En real (usuario sintético 1, ofertas de Lanbide, `claude-sonnet-5-5`): página `a=ver` (Test y Production URL); descarte por
+"lo que se hace en el puesto" → la IA no ve regla clara y lo explica; descarte por "otro motivo" con texto ("no quiero trabajar de
+dependiente en tienda") → regla `palabra = tienda` *propuesta por la IA*, con su porqué, que esconde 8 ofertas abiertas.
+Cuadro del porqué con cualquier motivo (cambio posterior): solo en simulación, por decisión de Marcos. Quitar regla y recuperar: en simulación.
 
 ## Reglas
 - **Motivo opcional.** Por defecto "solo quitarla": se guarda el descarte con `motivo = NULL` y no se aprende nada
   (mejor aprender menos que aprender mal por inercia). Motivos: `tarea` · `sector` · `empresa` · `salario` · `lejos` · `otro`.
-- **El porqué en palabras del usuario** (campo `x`, ≤ 200 caracteres): **solo con "otro motivo", y entonces obligatorio**. El cuadro aparece al elegir "otro" (CSS `:has`, sin JavaScript) y un script mínimo lo marca obligatorio; si llega "otro" sin texto, `Code: entrada` no descarta y la página lo pide (`falta_porque`). Con cualquier otro motivo el texto se ignora.
-  Lo lee la IA como dato (nunca como instrucción) y no va a ninguna tabla. Para que tampoco quede en n8n, el workflow tiene
+- **El porqué en palabras del usuario** (campo `x`, ≤ 200 caracteres): el cuadro aparece al elegir **cualquier motivo** (se oculta con
+  "solo quitarla"; CSS `:has`, sin JavaScript) y es **obligatorio con "otro motivo"** (script mínimo; si llega "otro" sin texto,
+  `Code: entrada` no descarta y la página lo pide: `falta_porque`). Sin motivo, el texto se ignora. Va a la IA como dato (nunca como
+  instrucción) cuando se le pregunta, y no va a ninguna tabla. Para que tampoco quede en n8n, el workflow tiene
   **Settings → Save successful production executions = Do not save** (las ejecuciones con error sí se guardan, para depurar,
-  y ahí sí aparecería el texto). La API de Claude lo recibe para responder. 
+  y ahí sí aparecería el texto). La API de Claude lo recibe para responder. Motivo de abrirlo a todos los motivos (08-oct, prueba real):
+  con "lo que se hace en el puesto" y sin texto la IA casi nunca ve una regla clara; con el porqué del usuario, sí.
 - **Reglas fijas (opción B), sin IA:**
   - `empresa` → excluye esa empresa al primer descarte.
   - `sector` → excluye el sector con `descartes_para_excluir_sector` (CONFIGURACION, 2) descartes por sector del mismo sector.

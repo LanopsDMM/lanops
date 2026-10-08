@@ -4,6 +4,7 @@
 // Se pregunta SOLO si: es un descarte nuevo (no una recarga), con motivo, y la regla fija de la opción B no cubre el caso:
 //   tarea · salario · lejos → siempre
 //   otro    → con el porqué que escribió el usuario (obligatorio con "otro": lo exige "Code: entrada")
+// Si el usuario escribió el porqué (con cualquier motivo), va en la petición como <explicacion_del_usuario>.
 //   sector  → solo si no sabemos el sector de la empresa (p. ej. Lanbide)
 //   empresa → solo si es de Lanbide (no publica la empresa)
 // Sin motivo no se pregunta (el usuario solo quería quitarla) y no se gasta API.
