@@ -25,6 +25,12 @@ const descartar = (r) => `<details class="descartar"><summary>No me interesa</su
   <p class="porque"><label for="x-${r.vacante}">Cuéntanos por qué (la IA lo lee para aprender; no se guarda en tu perfil):</label><br>
   <input type="text" id="x-${r.vacante}" name="x" maxlength="200" size="40"></p>
   <p><button type="submit">Descartar</button></p></form></details>`;
+// [08-oct] Lista vacía: decir POR QUÉ (antes ponía "Vuelve en unos minutos", y no hay nada evaluando en segundo plano).
+// Si el prefiltro no dejó pasar ninguna oferta → no hay ofertas que cumplan; si dejó pasar alguna → la evaluación falló ahora.
+const candidatas = $('Postgres: prefiltro').all().filter(i => i.json.vacante).length;
+const vacia = candidatas === 0
+  ? 'Ahora mismo ninguna oferta abierta cumple tus no negociables y tus exclusiones. Cada mañana entran ofertas nuevas de Lanbide; también puedes revisar lo que LANOPS ha aprendido de ti.'
+  : 'No hemos podido evaluar tus ofertas en este momento. Recarga la página dentro de un rato.';
 const aprendido = `<p><a href="descartar?u=${encodeURIComponent(q.u)}&amp;t=${encodeURIComponent(q.t)}&amp;a=ver">Lo que LANOPS ha aprendido de ti</a></p>`;
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const nota = (g) => Number(g).toFixed(1).replace('.', ',');
@@ -65,7 +71,7 @@ const html = `<!doctype html>
  footer{font-size:.85rem;color:#444;border-top:1px solid #ccc;margin-top:2rem;padding-top:.5rem}
 </style></head><body>
 <header><h1>Tus vacantes con más encaje</h1>
-<p>${filas.length ? `${filas.length} vacantes abiertas, ordenadas por lo que tú priorizas.` : 'Todavía no hay vacantes evaluadas para ti. Vuelve en unos minutos.'}</p>${aprendido}</header>
+<p>${filas.length ? `${filas.length} vacantes abiertas, ordenadas por lo que tú priorizas.` : vacia}</p>${aprendido}</header>
 <main><ol>${filas.map((r, i) => tarjeta(r, i + 1)).join('')}</ol></main>
 <footer><p>La IA evalúa; tú decides. Puntuación con la rúbrica abierta de career-ops (MIT). Ofertas de Lanbide: Fuente Lanbide / Open Data Euskadi (CC BY).</p></footer>
 <script>
