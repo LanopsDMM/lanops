@@ -3,7 +3,7 @@
 // Decide si se pregunta a Claude qué regla aprender de este descarte y, si sí, arma la petición.
 // Se pregunta SOLO si: es un descarte nuevo (no una recarga), con motivo, y la regla fija de la opción B no cubre el caso:
 //   tarea · salario · lejos → siempre
-//   otro    → solo si el usuario escribió el porqué (sin él, la IA no tendría nada que leer)
+//   otro    → con el porqué que escribió el usuario (obligatorio con "otro": lo exige "Code: entrada")
 //   sector  → solo si no sabemos el sector de la empresa (p. ej. Lanbide)
 //   empresa → solo si es de Lanbide (no publica la empresa)
 // Sin motivo no se pregunta (el usuario solo quería quitarla) y no se gasta API.

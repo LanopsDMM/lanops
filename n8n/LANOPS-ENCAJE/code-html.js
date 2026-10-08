@@ -11,17 +11,18 @@ const pedir = (r) => (r.banda === 'Alta' || r.banda === 'Media')
 const empresa = (r) => r.fuente === 'lanbide' ? 'Empresa no publicada · oferta gestionada por Lanbide' : r.empresa;
 // [08-oct] Botón "No me interesa" (LANOPS-FEEDBACK, opción B + IA): formulario GET a descartar?u=&t=&a=descartar&v=[&m=][&x=]
 // Motivo con "solo quitarla" por defecto (no se aprende nada; mejor aprender menos que aprender mal).
-// "x" = el porqué en palabras del usuario (≤ 200): lo lee la IA y no va a ninguna tabla (FEEDBACK no guarda sus ejecuciones
-// correctas en n8n). Va dentro de <details> (sin JavaScript).
+// "x" = el porqué en palabras del usuario (≤ 200), SOLO con "otro motivo" y entonces obligatorio: el cuadro aparece al elegir
+// "otro" (CSS :has, sin JavaScript; en navegadores sin :has se ve siempre) y un script mínimo lo marca obligatorio.
+// FEEDBACK tampoco acepta "otro" sin texto. Lo lee la IA y no va a ninguna tabla (FEEDBACK no guarda sus ejecuciones correctas).
 const MOTIVOS = [['tarea', 'lo que se hace en el puesto'], ['sector', 'el sector'], ['empresa', 'la empresa'],
-                 ['salario', 'el salario'], ['lejos', 'está lejos'], ['otro', 'otro motivo (cuéntanos abajo)']];
+                 ['salario', 'el salario'], ['lejos', 'está lejos'], ['otro', 'otro motivo']];
 const descartar = (r) => `<details class="descartar"><summary>No me interesa</summary>
   <form method="get" action="descartar">
   <input type="hidden" name="u" value="${esc(q.u)}"><input type="hidden" name="t" value="${esc(q.t)}">
   <input type="hidden" name="a" value="descartar"><input type="hidden" name="v" value="${r.vacante}">
   <p><label for="m-${r.vacante}">Motivo:</label>
   <select id="m-${r.vacante}" name="m"><option value="">solo quitarla</option>${MOTIVOS.map(([v, t]) => `<option value="${v}">${t}</option>`).join('')}</select></p>
-  <p><label for="x-${r.vacante}">Cuéntanos por qué, si quieres (la IA lo lee para aprender; no se guarda en tu perfil):</label><br>
+  <p class="porque"><label for="x-${r.vacante}">Cuéntanos por qué (la IA lo lee para aprender; no se guarda en tu perfil):</label><br>
   <input type="text" id="x-${r.vacante}" name="x" maxlength="200" size="40"></p>
   <p><button type="submit">Descartar</button></p></form></details>`;
 const aprendido = `<p><a href="descartar?u=${encodeURIComponent(q.u)}&amp;t=${encodeURIComponent(q.t)}&amp;a=ver">Lo que LANOPS ha aprendido de ti</a></p>`;
@@ -56,6 +57,7 @@ const html = `<!doctype html>
  a{color:#0b4fa8} a:focus{outline:3px solid #0b4fa8;outline-offset:2px}
  .descartar{margin:.5rem 0 0} .descartar summary{cursor:pointer;color:#0b4fa8} .descartar p{margin:.4rem 0}
  .descartar select,.descartar input,.descartar button{font:inherit} .descartar input{max-width:100%}
+ .descartar .porque{display:none} .descartar:has(option[value="otro"]:checked) .porque{display:block}
  summary:focus,input:focus{outline:3px solid #0b4fa8;outline-offset:2px}
  .descartar button{padding:.25rem .7rem;border:2px solid #0b4fa8;border-radius:.4rem;background:#fff;color:#0b4fa8;cursor:pointer}
  button:focus,select:focus{outline:3px solid #0b4fa8;outline-offset:2px}
@@ -66,5 +68,13 @@ const html = `<!doctype html>
 <p>${filas.length ? `${filas.length} vacantes abiertas, ordenadas por lo que tú priorizas.` : 'Todavía no hay vacantes evaluadas para ti. Vuelve en unos minutos.'}</p>${aprendido}</header>
 <main><ol>${filas.map((r, i) => tarjeta(r, i + 1)).join('')}</ol></main>
 <footer><p>La IA evalúa; tú decides. Puntuación con la rúbrica abierta de career-ops (MIT). Ofertas de Lanbide: Fuente Lanbide / Open Data Euskadi (CC BY).</p></footer>
+<script>
+// "Cuéntanos por qué" es obligatorio solo con "otro motivo" (si no hay JavaScript, FEEDBACK lo comprueba igualmente)
+document.querySelectorAll('details.descartar select').forEach(function (s) {
+  var x = document.getElementById('x-' + s.id.slice(2));
+  var f = function () { x.required = s.value === 'otro'; };
+  s.addEventListener('change', f); f();
+});
+</script>
 </body></html>`;
 return [{ json: { html } }];

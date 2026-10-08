@@ -72,6 +72,8 @@ if (e.accion === 'descartar') {
     if (a.motivo === 'sector' && c)
       msg.push(`Si descartas ${c.faltan === 1 ? 'una oferta más' : c.faltan + ' ofertas más'} del sector ${esc(c.valor)} por el sector, dejaremos de enseñarte ese sector.`);
   }
+} else if (e.accion === 'falta_porque') {
+  msg.push(`No hemos descartado «${esc(a.puesto || 'la oferta')}»: si eliges «otro motivo», cuéntanos por qué. Vuelve a tu lista y escríbelo, o elige «solo quitarla».`);
 } else if (e.accion === 'recuperar') {
   if (!a.hecho) msg.push('Esa oferta no estaba entre tus descartes.');
   else {
