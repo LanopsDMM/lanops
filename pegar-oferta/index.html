@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Pegar una oferta · LANOPS</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+  /* Solo reglas propias de esta página; el resto viene de ../styles.css */
+  form{display:grid;gap:1.1rem;margin-top:1rem}
+  .campo{display:grid;gap:.3rem}
+  .campo input,.campo textarea{width:100%}
+  textarea{min-height:14rem;resize:vertical}
+  .ayuda{font-size:.9rem;color:var(--texto-2);margin:0}
+  .opcional{font-weight:normal;color:var(--texto-2)}
+  #enviando{display:none}
+</style>
+</head>
+<body>
+<header><p class="marca"><a class="marca" href="../">LANOPS</a></p></header>
+
+<main>
+  <h1>Pegar una oferta</h1>
+  <p>¿Has visto una oferta en otro portal, en la web de una empresa o en un cartel? Pégala aquí y LANOPS te dice cuánto encajas, qué te falta y, si el encaje es alto o medio, te da un certificado para postular.</p>
+
+  <form id="pegar" method="post" action="https://n8n-production-3c20b.up.railway.app/webhook/pegar-oferta">
+    <input type="hidden" name="u" id="u">
+    <input type="hidden" name="t" id="t">
+
+    <div class="campo" id="campo-enlace">
+      <label for="enlace">Tu enlace personal de LANOPS</label>
+      <input id="enlace" name="enlace" type="url" aria-describedby="enlace-ayuda" placeholder="https://n8n-production-3c20b.up.railway.app/webhook/encaje?u=…&amp;t=…">
+      <p class="ayuda" id="enlace-ayuda">Es el enlace de "Ver mis ofertas" que te dimos al crear tu perfil. ¿Aún no tienes perfil? <a href="../alta/">Créalo aquí</a>.</p>
+    </div>
+
+    <div class="campo">
+      <label for="texto">Texto de la oferta</label>
+      <textarea id="texto" name="texto" required minlength="200" maxlength="15000" aria-describedby="texto-ayuda"></textarea>
+      <p class="ayuda" id="texto-ayuda">Copia y pega la oferta entera: puesto, empresa, requisitos, condiciones. Cuanto más completa, mejor la evaluación.</p>
+    </div>
+
+    <div class="campo">
+      <label for="empresa">Empresa <span class="opcional">(opcional, si no sale en el texto)</span></label>
+      <input id="empresa" name="empresa" maxlength="100">
+    </div>
+
+    <div class="campo">
+      <label for="url">Enlace a la oferta <span class="opcional">(opcional)</span></label>
+      <input id="url" name="url" type="url" maxlength="255" placeholder="https://…">
+    </div>
+
+    <p><input type="submit" value="Evaluar mi encaje"></p>
+    <p id="enviando" class="aviso" role="status">Leyendo la oferta y evaluando tu encaje… tarda alrededor de un minuto. No cierres esta página.</p>
+  </form>
+</main>
+
+<footer>
+  <p><a href="../">Volver a LANOPS</a> · Rúbrica abierta de <a href="https://github.com/career-ops-hq/career-ops">career-ops</a> (MIT). La IA evalúa; tú decides.</p>
+</footer>
+
+<script>
+  // Si se llega desde la lista de ofertas con ?u=&t=, no hace falta pedir el enlace.
+  // (Sin JavaScript también funciona: n8n acepta el enlace pegado y saca u y t de él.)
+  try {
+    const q = new URLSearchParams(location.search);
+    if (/^\d+$/.test(q.get('u') || '') && /^[0-9a-f]{64}$/i.test(q.get('t') || '')) {
+      document.getElementById('u').value = q.get('u');
+      document.getElementById('t').value = q.get('t');
+      document.getElementById('campo-enlace').hidden = true;
+    }
+  } catch (e) {}
+  document.getElementById('pegar').addEventListener('submit', function () {
+    document.getElementById('enviando').style.display = 'block';
+    this.querySelector('[type=submit]').disabled = true;
+  });
+</script>
+</body>
+</html>
