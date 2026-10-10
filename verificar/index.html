@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Verificar certificado · LANOPS</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+  /* Solo reglas propias de esta página; el resto viene de ../styles.css */
+  .estado{font-family:var(--serif);font-size:1.6rem;line-height:1.25;margin:0 0 .8rem}
+  .estado-ok{color:var(--marca)}
+  .estado-ko{color:var(--texto)}
+  .titular{font-size:1.25rem;font-weight:600;margin:.2rem 0 0}
+  .cifra{font-size:1.15rem;margin:.8rem 0 .2rem}
+  .datos{display:grid;grid-template-columns:max-content 1fr;gap:.2rem 1rem;margin:.6rem 0}
+  .datos dt{color:var(--texto-2)}
+  .datos dd{margin:0}
+  .bloque{margin-top:1.2rem}
+  .buscar{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-top:.6rem}
+  .buscar input{flex:1 1 18rem}
+</style>
+</head>
+<body>
+<header><p class="marca">LANOPS</p></header>
+
+<main>
+  <h1>Verificar certificado</h1>
+  <div id="resultado" aria-live="polite">
+    <p>Comprobando el certificado…</p>
+  </div>
+  <noscript>
+    <p class="aviso">Esta página necesita JavaScript. Para comprobar el certificado sin JavaScript abre
+    <span class="codigo">https://n8n-production-3c20b.up.railway.app/webhook/verificar?c=</span>
+    seguido del código del certificado.</p>
+  </noscript>
+</main>
+
+<footer>
+  <p>% de congruencia = puntuación global × 20. La IA evalúa; la persona decide.
+  Rúbrica abierta de <a href="https://github.com/santifer/career-ops">career-ops</a> (MIT).</p>
+  <p><a href="../">Qué es LANOPS</a></p>
+</footer>
+
+<script>
+const N8N = 'https://n8n-production-3c20b.up.railway.app/webhook/verificar';
+
+const DIMENSIONES = [
+  ['d1_match_cv', 'Encaje con el CV'],
+  ['d2_north_star', 'Alineación con lo que busca'],
+  ['d3_compensacion', 'Compensación'],
+  ['d4_cultura', 'Cultura y condiciones'],
+  ['d5_red_flags', 'Alertas (5 = ninguna)']
+];
+
+const caja = document.getElementById('resultado');
+
+// --- utilidades: siempre textContent, nunca innerHTML con datos del JSON ---
+function el(tag, props, ...hijos) {
+  const n = document.createElement(tag);
+  if (props) for (const [k, v] of Object.entries(props)) {
+    if (k === 'text') n.textContent = v; else n.setAttribute(k, v);
+  }
+  for (const h of hijos) if (h) n.append(h);
+  return n;
+}
+function fecha(iso) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || '');
+  return m ? m[3] + '/' + m[2] + '/' + m[1] : 'no consta';
+}
+function nota(x) {
+  const n = Number(x);
+  return Number.isFinite(n) ? n.toFixed(2).replace('.', ',') : '—';
+}
+function banda(b) {
+  if (b === 'Alta') return ['alto', 'banda-alto'];
+  if (b === 'Media') return ['medio', 'banda-medio'];
+  return ['bajo', 'banda-bajo'];
+}
+function pintar(...nodos) {
+  caja.replaceChildren(...nodos);
+}
+
+// --- estados ---
+function sinCodigo() {
+  const input = el('input', { id: 'c', name: 'c', type: 'text', autocomplete: 'off',
+    placeholder: 'p. ej. 0712a862-3a77-4c9e-adcb-162ee91371c7' });
+  pintar(
+    el('p', { text: 'Escanea el QR del certificado o escribe su código.' }),
+    el('form', { class: 'buscar', method: 'get', action: '' },
+      el('label', { for: 'c', text: 'Código del certificado' }),
+      input,
+      el('input', { type: 'submit', value: 'Comprobar' }))
+  );
+}
+
+function noExiste() {
+  pintar(el('div', { class: 'cert' },
+    el('p', { class: 'estado estado-ko', text: '✖ Este certificado no existe o ha sido manipulado.' }),
+    el('p', { text: 'Comprueba que el código coincide con el del documento. Si te lo han enviado, pide a la persona que te lo reenvíe.' })
+  ));
+}
+
+function sinConexion() {
+  pintar(el('div', { class: 'aviso', role: 'alert' },
+    el('p', { text: 'No se ha podido comprobar ahora. Inténtalo en unos minutos.' })
+  ));
+}
+
+function certificado(d) {
+  let titulo, clase;
+  if (d.estado === 'vigente') { titulo = '✔ Certificado válido y vigente'; clase = 'estado estado-ok'; }
+  else if (d.estado === 'caducado') { titulo = '✖ Certificado caducado el ' + fecha(d.fecha_caducidad); clase = 'estado estado-ko'; }
+  else { titulo = '✖ Certificado revocado'; clase = 'estado estado-ko'; }
+
+  const [bTexto, bClase] = banda(d.banda);
+  const pct = Math.max(0, Math.min(100, Number(d.porcentaje) || 0));
+
+  const verif = d.titular_verificado && d.entidad
+    ? 'Perfil verificado por ' + d.entidad
+    : 'Perfil sin verificar (LANOPS es de entrada abierta)';
+
+  const oferta = el('p', { text: [d.puesto, d.empresa, d.ubicacion].filter(Boolean).join(' · ') });
+  if (d.url_oferta && /^https?:\/\//i.test(d.url_oferta)) {
+    oferta.append(' · ', el('a', { href: d.url_oferta, rel: 'noopener', text: 'Ver la oferta' }));
+  }
+
+  const dims = el('ul', { class: 'dims' });
+  const valores = d.dimensiones || {};
+  for (const [k, nombre] of DIMENSIONES) {
+    const v = valores[k];
+    dims.append(el('li', { text: nombre + ': ' + (v == null ? 'no consta' : v + '/5') }));
+  }
+
+  const barra = el('div', { class: 'barra', 'aria-hidden': 'true' });
+  const relleno = el('span');
+  relleno.style.width = pct + '%';
+  barra.append(relleno);
+
+  const datos = el('dl', { class: 'datos' });
+  const filas = [
+    ['Emitido el', fecha(d.fecha_emision)],
+    ['Válido hasta', fecha(d.fecha_caducidad)],
+    ['Evaluado el', fecha(d.fecha_evaluacion)],
+    ['Rúbrica', d.version_rubrica || 'no consta'],
+    ['Modelo', d.modelo || 'no consta']
+  ];
+  for (const [k, v] of filas) datos.append(el('dt', { text: k }), el('dd', { text: v }));
+
+  pintar(el('article', { class: 'cert' },
+    el('p', { class: clase, text: titulo }),
+    el('p', { class: 'titular', text: d.titular || 'no consta' }),
+    el('p', { class: 'meta', text: verif }),
+    el('div', { class: 'bloque' },
+      el('h2', { text: 'Oferta evaluada' }),
+      oferta),
+    el('div', { class: 'bloque' },
+      el('h2', { text: 'Encaje' }),
+      el('p', { class: 'cifra' },
+        el('strong', { text: (d.porcentaje ?? '—') + ' % · ' + nota(d.global) + '/5' }),
+        ' — ',
+        el('span', { class: 'banda ' + bClase, text: 'encaje ' + bTexto })),
+      barra,
+      dims),
+    datos,
+    el('p', { class: 'codigo', text: 'Código: ' + (d.codigo || '') })
+  ));
+}
+
+// --- arranque ---
+(async function () {
+  const c = (new URLSearchParams(location.search).get('c') || '').trim();
+  if (!c) return sinCodigo();
+  if (!/^[0-9a-f-]{36}$/i.test(c)) return noExiste();
+
+  const control = new AbortController();
+  const reloj = setTimeout(() => control.abort(), 15000);
+  try {
+    const r = await fetch(N8N + '?c=' + encodeURIComponent(c), { signal: control.signal });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    if (d.estado === 'vigente' || d.estado === 'caducado' || d.estado === 'revocado') certificado(d);
+    else if (d.estado === 'no_encontrado' || d.estado === 'firma_no_valida') noExiste();
+    else sinConexion();
+  } catch (e) {
+    sinConexion();
+  } finally {
+    clearTimeout(reloj);
+  }
+})();
+</script>
+</body>
+</html>
