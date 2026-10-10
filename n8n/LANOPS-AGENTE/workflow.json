@@ -1,0 +1,382 @@
+{
+  "name": "LANOPS-AGENTE",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Ejecutar a mano",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -120
+      ],
+      "id": "2d350514-2900-4905-97da-fcf31bed4b3d"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n · workflow LANOPS-AGENTE · nodo \"Code: solo prueba\"  (detrás de \"Ejecutar a mano\")\n// Modo: Run Once for All Items · JavaScript\n// Para probar sin leer las 23 webs: solo estas empresas (nombres EXACTOS de lanops.empresas, de data/empresas.csv).\n// Las 8 con ofertas en texto (data/empresas-notas.md) + Elkar (solo buzón de CV: caso \"Candidatura espontánea\").\nreturn [{ json: { solo: [\n  'MONDRAGON Corporación (portal de empleo de las cooperativas)', 'Vicomtech', 'CIC nanoGUNE', 'Ausolan', 'Gureak',\n  'Matia Fundazioa', 'Ingeteam Indar Machines', 'BM Supermercados (Grupo Uvesco)', 'Elkar'\n] } }];\n"
+      },
+      "name": "Code: solo prueba",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        -120
+      ],
+      "id": "9fccc6dc-6f3e-4c8b-b566-ee57010b0577"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "weeksInterval": 1,
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "name": "Cada lunes 07:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        120
+      ],
+      "id": "4ace9250-b1a3-4a78-bf34-5aba8fc87eff"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n · workflow LANOPS-AGENTE · nodo \"Code: todas\"  (detrás de \"Cada lunes 07:00\")\n// Modo: Run Once for All Items · JavaScript\n// Lista vacía = todas las empresas activas con url_empleo.\nreturn [{ json: { solo: [] } }];\n"
+      },
+      "name": "Code: todas",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        120
+      ],
+      "id": "b097876f-25fc-416c-a5e5-390846ae947f"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT e.id AS empresa, e.nombre, e.url_empleo, e.tipo_lectura, e.ciudad,\n       substring(e.url_empleo from '^(https?://[^/?#]+)') || '/robots.txt' AS robots_url\nFROM lanops.empresas e\nWHERE e.activa AND e.url_empleo IS NOT NULL AND coalesce(e.tipo_lectura, '') <> 'ninguna'\n  AND (jsonb_array_length($1::jsonb) = 0 OR e.nombre IN (SELECT jsonb_array_elements_text($1::jsonb)))\nORDER BY e.id;",
+        "options": {
+          "queryReplacement": "={{ [ JSON.stringify($json.solo) ] }}"
+        }
+      },
+      "name": "Postgres: empresas",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        440,
+        0
+      ],
+      "id": "20fcc013-0e1f-4e13-b47b-d286abe7b984"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.robots_url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "LANOPS-bot/0.1 (+https://github.com/LanopsDMM/lanops)"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 500
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 15000
+        }
+      },
+      "name": "HTTP Request: robots.txt",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        660,
+        0
+      ],
+      "id": "d89abdad-bce8-41b2-b8cf-de95ee7c7281",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n · workflow LANOPS-AGENTE · nodo \"Code: robots.txt\"\n// Modo: Run Once for All Items · JavaScript\n// Entrada: respuestas de \"HTTP Request: robots.txt\", en el mismo orden que \"Postgres: empresas\".\n// Salida: SOLO las empresas cuya url_empleo permite robots.txt (las demás no se visitan).\n// Reglas: 200 → se aplican los Disallow/Allow del grupo \"LANOPS-bot\" o, si no hay, del grupo \"*\" (gana la regla más larga);\n// 4xx (no hay robots.txt) → permitido; 5xx o error de red → NO permitido (lo prudente).\nconst empresas = $('Postgres: empresas').all().map(i => i.json);\nconst UA = 'lanops-bot';\n\nfunction reglas(texto) {\n  const grupos = []; let actual = null, leyendoAgentes = false;\n  for (const linea of String(texto).split(/\\r?\\n/)) {\n    const l = linea.replace(/#.*/, '').trim(); if (!l) continue;\n    const m = l.match(/^([A-Za-z-]+)\\s*:\\s*(.*)$/); if (!m) continue;\n    const k = m[1].toLowerCase(), v = m[2].trim();\n    if (k === 'user-agent') {\n      if (!leyendoAgentes) { actual = { agentes: [], reglas: [] }; grupos.push(actual); }\n      actual.agentes.push(v.toLowerCase()); leyendoAgentes = true;\n    } else if (actual && (k === 'disallow' || k === 'allow')) {\n      leyendoAgentes = false; if (v) actual.reglas.push({ permitir: k === 'allow', ruta: v });\n    } else { leyendoAgentes = false; }\n  }\n  const propio = grupos.filter(g => g.agentes.some(a => a !== '*' && UA.startsWith(a)));\n  const usar = propio.length ? propio : grupos.filter(g => g.agentes.includes('*'));\n  return usar.flatMap(g => g.reglas);\n}\nconst casa = (ruta, patron) => {\n  const re = '^' + patron.replace(/[.+?^${}()|[\\]\\\\]/g, '\\\\$&').replace(/\\*/g, '.*').replace(/\\\\\\$$/, '$');\n  return new RegExp(re.endsWith('$') ? re : re).test(ruta);\n};\nfunction permitido(url, texto) {\n  const ruta = (String(url).match(/^https?:\\/\\/[^/?#]+([^#]*)/) || [])[1] || '/';\n  let mejor = null;\n  for (const r of reglas(texto)) if (casa(ruta || '/', r.ruta) && (!mejor || r.ruta.length > mejor.ruta.length)) mejor = r;\n  return !mejor || mejor.permitir;\n}\n\nconst salida = [];\n$input.all().forEach((item, i) => {\n  const e = empresas[i]; if (!e) return;\n  const j = item.json, status = Number(j.statusCode || 0);\n  let ok;\n  if (j.error || !status || status >= 500) ok = false;\n  else if (status >= 400) ok = true;\n  else ok = permitido(e.url_empleo, j.body ?? j.data ?? '');\n  if (ok) salida.push({ json: e });\n});\nreturn salida;\n"
+      },
+      "name": "Code: robots.txt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ],
+      "id": "406fddd4-21ac-426c-ac9b-5b7998f7a465"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url_empleo }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "LANOPS-bot/0.1 (+https://github.com/LanopsDMM/lanops)"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 2000
+            }
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 20000
+        }
+      },
+      "name": "HTTP Request: página de empleo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1100,
+        0
+      ],
+      "id": "31cbd690-48fc-4800-be7a-fc944ce1e669",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n · workflow LANOPS-AGENTE · nodo \"Code: texto y petición\"\n// Modo: Run Once for All Items · JavaScript\n// Entrada: respuestas de \"HTTP Request: página de empleo\", en el mismo orden que \"Code: robots.txt\".\n// HTML → texto (≤ 15.000 caracteres). Si la página trae JSON-LD JobPosting, se le pasa a Claude ese JSON (más fiable).\n// Salida: SOLO las empresas con página leída, con la petición a Claude. Las fallidas se cuentan en \"Code: leer\".\nconst empresas = $('Code: robots.txt').all().map(i => i.json);\nconst MODELO = 'claude-sonnet-5-5';\nconst ENT = { amp: '&', lt: '<', gt: '>', quot: '\"', apos: \"'\", nbsp: ' ', aacute: 'á', eacute: 'é', iacute: 'í', oacute: 'ó',\n  uacute: 'ú', ntilde: 'ñ', Aacute: 'Á', Eacute: 'É', Iacute: 'Í', Oacute: 'Ó', Uacute: 'Ú', Ntilde: 'Ñ', uuml: 'ü', ordf: 'ª', ordm: 'º', euro: '€' };\nconst decod = (s) => s.replace(/&(#x?[0-9a-f]+|\\w+);/gi, (m, c) => c[0] === '#'\n  ? String.fromCodePoint(parseInt(c[1].toLowerCase() === 'x' ? c.slice(2) : c.slice(1), c[1].toLowerCase() === 'x' ? 16 : 10))\n  : (ENT[c] ?? m));\nfunction jsonLd(html) {\n  const out = [];\n  for (const m of html.matchAll(/<script[^>]*application\\/ld\\+json[^>]*>([\\s\\S]*?)<\\/script>/gi)) {\n    try {\n      const walk = (o) => { if (!o || typeof o !== 'object') return;\n        if (Array.isArray(o)) return o.forEach(walk);\n        const t = [].concat(o['@type'] || []); if (t.includes('JobPosting')) out.push(o);\n        if (o['@graph']) walk(o['@graph']); if (o.itemListElement) walk(o.itemListElement); if (o.item) walk(o.item); };\n      walk(JSON.parse(m[1].trim()));\n    } catch (e) {}\n  }\n  return out;\n}\nfunction texto(html) {\n  return decod(html\n    .replace(/<(script|style|noscript|svg|head)[\\s\\S]*?<\\/\\1>/gi, ' ')\n    .replace(/<a\\s[^>]*href=\"([^\"#][^\"]*)\"[^>]*>/gi, ' [enlace: $1] ')\n    .replace(/<(br|p|div|li|h[1-6]|tr|section|article)[^>]*>/gi, '\\n')\n    .replace(/<[^>]+>/g, ' '))\n    .replace(/[ \\t]+/g, ' ').replace(/\\n\\s*\\n+/g, '\\n').trim();\n}\nconst SYSTEM = `Eres el agente de webs de LANOPS (red de empleo de Gipuzkoa). Recibes la página de empleo de UNA empresa\n(texto de la página, con los enlaces marcados como [enlace: …], o datos JSON-LD JobPosting).\nDevuelve SOLO un JSON: {\"vacantes\":[{\"puesto\":\"\",\"ubicacion\":\"\",\"contrato\":\"indefinido|temporal|practicas|otro|\",\"jornada\":\"completa|parcial|\",\"salario_min\":0,\"descripcion\":\"\",\"url\":\"\"}],\"candidatura_espontanea\":false,\"como_enviar\":\"\"}\nReglas:\n- Solo ofertas de empleo concretas que la página publica AHORA. No inventes nada; un campo que no está va vacío (\"\" o 0).\n- Ignora menús, noticias, cookies, ofertas cerradas o caducadas y procesos de \"bolsa\" sin puesto concreto.\n- url: el enlace a la ficha de esa oferta si aparece (completo; si es relativo, tal cual); si no, \"\".\n- descripcion: lo que la página diga del puesto (funciones, requisitos), máximo 1500 caracteres.\n- Máximo 30 ofertas.\n- Si NO hay ninguna oferta concreta pero la página invita a enviar el CV (formulario, correo de RR. HH., \"trabaja con nosotros\"),\n  candidatura_espontanea = true y como_enviar = cómo se envía (correo o formulario), en una frase.`;\n\nconst salida = [];\n$input.all().forEach((item, i) => {\n  const e = empresas[i]; if (!e) return;\n  const j = item.json, status = Number(j.statusCode || 0);\n  const html = String(j.body ?? j.data ?? '');\n  if (j.error || status < 200 || status >= 400 || html.length < 200) return;   // fallo de lectura\n  const ld = jsonLd(html);\n  const contenido = ld.length\n    ? 'JSON-LD JobPosting de la página:\\n' + JSON.stringify(ld).slice(0, 15000)\n    : 'Texto de la página:\\n' + texto(html).slice(0, 15000);\n  salida.push({ json: { ...e, fuente_lectura: ld.length ? 'jsonld' : 'html', cuerpo: {\n    model: MODELO, max_tokens: 8000, system: SYSTEM,\n    messages: [{ role: 'user', content: `Empresa: ${e.nombre} (${e.ciudad || 'Gipuzkoa'})\\nURL: ${e.url_empleo}\\n\\n${contenido}` }]\n  } } });\n});\nreturn salida;\n"
+      },
+      "name": "Code: texto y petición",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        0
+      ],
+      "id": "82d14e22-aefb-4fdc-a6bd-56ef4a4ae63b"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.cuerpo }}",
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 0
+            }
+          },
+          "timeout": 120000
+        }
+      },
+      "name": "HTTP Request: Claude",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1540,
+        0
+      ],
+      "id": "ed31e077-9d72-403d-9018-a66a8ac46f92",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n · workflow LANOPS-AGENTE · nodo \"Code: leer\"\n// Modo: Run Once for All Items · JavaScript\n// Entrada: respuestas de \"HTTP Request: Claude\", en el mismo orden que \"Code: texto y petición\".\n// Salida: UN item con todas las vacantes leídas y el resultado de cada empresa, para \"Postgres: guardar\".\n// ok = página leída y (≥ 1 oferta o candidatura espontánea). Bloqueada por robots.txt = no cuenta (ni ok ni fallo).\nconst todas = $('Postgres: empresas').all().map(i => i.json);\nconst permitidas = new Set($('Code: robots.txt').all().map(i => i.json.empresa));\nconst leidas = $('Code: texto y petición').all().map(i => i.json);\nconst txt = (v, n) => String(v ?? '').trim().slice(0, n);\nconst abs = (u, base) => {\n  u = String(u || '').trim(); if (!u) return base;\n  if (/^https?:\\/\\//i.test(u)) return u.slice(0, 255);\n  const origen = (base.match(/^https?:\\/\\/[^/?#]+/) || [''])[0];\n  return (u.startsWith('/') ? origen + u : base.replace(/[^/]*$/, '') + u).slice(0, 255);\n};\n\nconst vacantes = [], lecturas = [], resumen = [];\nconst porEmpresa = new Map();\n$input.all().forEach((item, i) => {\n  const e = leidas[i]; if (!e) return;\n  try {\n    const t = (item.json.content || []).filter(b => b.type === 'text').map(b => b.text).join('');\n    const r = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1));\n    porEmpresa.set(e.empresa, { e, r });\n  } catch (err) { porEmpresa.set(e.empresa, { e, r: null }); }\n});\n\nfor (const emp of todas) {\n  if (!permitidas.has(emp.empresa)) { resumen.push(`${emp.nombre}: bloqueada por robots.txt (no se visita)`); continue; }\n  const x = porEmpresa.get(emp.empresa);\n  if (!x) { lecturas.push({ empresa: emp.empresa, ok: false }); resumen.push(`${emp.nombre}: no se pudo leer la página`); continue; }\n  if (!x.r) { lecturas.push({ empresa: emp.empresa, ok: false }); resumen.push(`${emp.nombre}: respuesta de Claude no válida`); continue; }\n  const lista = (Array.isArray(x.r.vacantes) ? x.r.vacantes : []).slice(0, 30)\n    .map(v => ({\n      empresa: emp.empresa,\n      puesto: txt(v.puesto, 150),\n      ubicacion: txt(v.ubicacion, 60) || null,\n      contrato: ['indefinido', 'temporal', 'practicas', 'otro'].includes(v.contrato) ? v.contrato : null,\n      jornada: ['completa', 'parcial'].includes(v.jornada) ? v.jornada : null,\n      salario_min: parseInt(v.salario_min, 10) > 0 ? parseInt(v.salario_min, 10) : null,\n      requisitos: txt(v.descripcion, 1500) || null,\n      url_origen: abs(v.url, emp.url_empleo)\n    }))\n    .filter(v => v.puesto);\n  if (!lista.length && x.r.candidatura_espontanea) {\n    lista.push({ empresa: emp.empresa, puesto: 'Candidatura espontánea', ubicacion: emp.ciudad || null, contrato: null,\n      jornada: null, salario_min: null, url_origen: emp.url_empleo,\n      requisitos: txt(`${emp.nombre} no publica ofertas concretas pero recibe candidaturas. ${x.r.como_enviar || ''}`, 1500) });\n  }\n  vacantes.push(...lista);\n  lecturas.push({ empresa: emp.empresa, ok: lista.length > 0 });\n  resumen.push(`${emp.nombre} (${x.e.fuente_lectura}): ${lista.length ? lista.length + ' ofertas' : 'ninguna oferta en el texto (¿ATS con JavaScript?)'}`);\n}\nreturn [{ json: { datos: { vacantes, lecturas }, resumen } }];\n"
+      },
+      "name": "Code: leer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        0
+      ],
+      "id": "4aaf51a9-12ff-4be0-910b-e53e111db467"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH d AS (SELECT $1::jsonb AS j),\nv AS (\n  SELECT (x->>'empresa')::int AS empresa, x->>'puesto' AS puesto, x->>'ubicacion' AS ubicacion, x->>'contrato' AS contrato,\n         x->>'jornada' AS jornada, (x->>'salario_min')::int AS salario_min, x->>'requisitos' AS requisitos,\n         x->>'url_origen' AS url_origen,\n         md5('agente|' || (x->>'empresa') || '|' || lower(x->>'puesto') || '|' || coalesce(x->>'url_origen', '')) AS hash\n  FROM d, jsonb_array_elements(d.j->'vacantes') x\n),\nins AS (\n  INSERT INTO lanops.vacantes (empresa, puesto, requisitos, contrato, jornada, ubicacion, salario_min,\n                               estado, fuente, url_origen, hash, fecha_pub, vista_en)\n  SELECT DISTINCT ON (hash) empresa, puesto, requisitos, contrato, jornada, ubicacion, salario_min,\n         'abierta', 'agente', url_origen, hash, now(), now()\n  FROM v\n  ON CONFLICT (hash) DO UPDATE SET vista_en = now(), estado = 'abierta',\n    requisitos = coalesce(EXCLUDED.requisitos, lanops.vacantes.requisitos)\n  RETURNING (xmax = 0) AS nueva\n),\nl AS (\n  SELECT (x->>'empresa')::int AS empresa, (x->>'ok')::boolean AS ok FROM d, jsonb_array_elements(d.j->'lecturas') x\n),\nemp AS (\n  UPDATE lanops.empresas e SET ultima_lectura = now(),\n         fallos_seguidos = CASE WHEN l.ok THEN 0 ELSE coalesce(e.fallos_seguidos, 0) + 1 END\n  FROM l WHERE e.id = l.empresa\n  RETURNING e.id, e.nombre, e.fallos_seguidos\n),\ncerrar AS (\n  UPDATE lanops.vacantes x SET estado = 'cerrada'\n  WHERE x.fuente = 'agente' AND x.estado = 'abierta'\n    AND x.empresa IN (SELECT empresa FROM l WHERE ok)\n    AND x.hash NOT IN (SELECT hash FROM v)\n    AND x.vista_en < now() - make_interval(days => coalesce((SELECT valor::int FROM lanops.configuracion\n                                                              WHERE clave = 'cierre_agente_dias'), 14))\n  RETURNING 1\n)\nSELECT (SELECT count(*) FROM ins WHERE nueva) AS vacantes_nuevas,\n       (SELECT count(*) FROM ins WHERE NOT nueva) AS vacantes_vistas_otra_vez,\n       (SELECT count(*) FROM cerrar) AS vacantes_cerradas,\n       (SELECT coalesce(json_agg(nombre || ' (' || fallos_seguidos || ' fallos seguidos)'), '[]'::json)\n          FROM emp WHERE fallos_seguidos >= 2) AS alertas;",
+        "options": {
+          "queryReplacement": "={{ [ JSON.stringify($json.datos) ] }}"
+        }
+      },
+      "name": "Postgres: guardar",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1980,
+        0
+      ],
+      "id": "58515f8e-ca09-4b3b-aafb-9b4398b74080"
+    }
+  ],
+  "connections": {
+    "Ejecutar a mano": {
+      "main": [
+        [
+          {
+            "node": "Code: solo prueba",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: solo prueba": {
+      "main": [
+        [
+          {
+            "node": "Postgres: empresas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cada lunes 07:00": {
+      "main": [
+        [
+          {
+            "node": "Code: todas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: todas": {
+      "main": [
+        [
+          {
+            "node": "Postgres: empresas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres: empresas": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request: robots.txt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request: robots.txt": {
+      "main": [
+        [
+          {
+            "node": "Code: robots.txt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: robots.txt": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request: página de empleo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request: página de empleo": {
+      "main": [
+        [
+          {
+            "node": "Code: texto y petición",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: texto y petición": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request: Claude",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request: Claude": {
+      "main": [
+        [
+          {
+            "node": "Code: leer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: leer": {
+      "main": [
+        [
+          {
+            "node": "Postgres: guardar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
