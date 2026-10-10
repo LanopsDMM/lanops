@@ -31,8 +31,8 @@ a{color:var(--marca);text-underline-offset:2px} a:hover{color:var(--marca-osc)}
 
 /* Cabecera: barra crema con línea terracota */
 header,.cabecera{border-bottom:3px solid var(--marca);padding:.8rem 1rem;max-width:none}
-header>*{max-width:46rem;margin-left:auto;margin-right:auto}
-.marca{font-family:var(--serif);font-size:1.3rem;letter-spacing:.06em;color:var(--marca);text-decoration:none;margin:0}
+header>*{max-width:44rem;margin-left:auto;margin-right:auto}
+.marca{font-family:var(--serif);font-size:1.3rem;letter-spacing:.06em;color:var(--marca);text-decoration:none;margin-top:0;margin-bottom:0}
 
 /* Foco visible en todo lo interactivo */
 a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{
@@ -67,6 +67,7 @@ ol.vacs,.vacs{list-style:none;padding:0}
 .banda-alto{background:var(--alto-bg);color:var(--alto-tx)}
 .banda-medio{background:var(--medio-bg);color:var(--medio-tx)}
 .banda-bajo{background:var(--bajo-bg);color:var(--bajo-tx)}
+.etq{border:1px solid var(--borde-control);color:var(--texto-2);font-weight:normal}
 
 /* Avisos */
 .aviso{background:var(--medio-bg);color:var(--medio-tx);border-left:4px solid var(--medio-tx);padding:.6rem .8rem;border-radius:0}
@@ -74,11 +75,16 @@ ol.vacs,.vacs{list-style:none;padding:0}
 /* Certificado y verificación */
 .cert{background:var(--superficie);border:1px solid var(--borde);border-top:6px solid var(--marca);border-radius:var(--radio);padding:1.5rem;margin-top:1rem}
 .codigo{font-family:ui-monospace,Consolas,monospace;font-size:.9rem;word-break:break-all;color:var(--texto-2)}
-.qr img,.qr svg{width:9rem;height:9rem}
+.qr{display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin-top:1rem}
+.qr img,.qr svg{width:9rem;height:9rem;flex:none} .qr p{flex:1 1 16rem;margin:0}
+.cert h2{margin:1.2rem 0 .3rem} .cert .nota{font-size:1.5rem}
+dl{display:grid;grid-template-columns:auto 1fr;gap:.2rem 1rem;margin:0} dt{color:var(--texto-2)} dd{margin:0}
+main>h2{margin-top:1.8rem}
+form{margin:.4rem 0 .8rem}
 
 footer{max-width:46rem;margin:2rem auto 0;padding:.6rem 1rem 1.5rem;border-top:1px solid var(--borde);font-size:.875rem;color:var(--texto-2)}
 
 /* Accesibilidad */
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
-@media print{body{background:#fff}.solo-pantalla{display:none!important}.cert{border-color:#999}}
+@media print{body{background:#fff}.solo-pantalla{display:none!important}.cert{border-color:#999;max-width:none;margin:0}a{color:var(--texto)}}
