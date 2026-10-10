@@ -1,0 +1,476 @@
+{
+  "name": "LANOPS-PEGAR-OFERTA",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pegar-oferta",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook /pegar-oferta",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "5668732b-c5dc-4c52-9b15-b06aac5d91b7",
+      "webhookId": "9be9956f-0039-470a-86e3-42423e636a7a"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n · workflow LANOPS-PEGAR-OFERTA · nodo \"Code: entrada\"\n// Modo: Run Once for All Items · JavaScript\n// Recibe el formulario de lanops/pegar-oferta/index.html (POST urlencoded en $json.body).\n// Identifica al usuario con su enlace firmado de ENCAJE: u y t, o el enlace entero pegado en \"enlace\".\n// firma = HMAC-SHA256(ENCAJE_SECRET, 'encaje:' + u), el mismo cálculo que LANOPS-ENCAJE/code-firma.js.\nfunction sha256(bytes) {\n  const K = [0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,\n    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,\n    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,\n    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,\n    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,\n    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,\n    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,\n    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];\n  const H = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];\n  const l = bytes.length, n = ((l + 9 + 63) >> 6) << 6, m = new Uint8Array(n);\n  m.set(bytes); m[l] = 0x80;\n  const bits = l * 8;\n  m[n - 4] = (bits >>> 24) & 255; m[n - 3] = (bits >>> 16) & 255; m[n - 2] = (bits >>> 8) & 255; m[n - 1] = bits & 255;\n  m[n - 5] = Math.floor(bits / 2 ** 32) & 255;\n  const w = new Uint32Array(64), r = (x, s) => (x >>> s) | (x << (32 - s));\n  for (let i = 0; i < n; i += 64) {\n    for (let t = 0; t < 16; t++) w[t] = (m[i+4*t] << 24) | (m[i+4*t+1] << 16) | (m[i+4*t+2] << 8) | m[i+4*t+3];\n    for (let t = 16; t < 64; t++) {\n      const s0 = r(w[t-15], 7) ^ r(w[t-15], 18) ^ (w[t-15] >>> 3);\n      const s1 = r(w[t-2], 17) ^ r(w[t-2], 19) ^ (w[t-2] >>> 10);\n      w[t] = (w[t-16] + s0 + w[t-7] + s1) | 0;\n    }\n    let [a, b, c, d, e, f, g, h] = H;\n    for (let t = 0; t < 64; t++) {\n      const t1 = (h + (r(e, 6) ^ r(e, 11) ^ r(e, 25)) + ((e & f) ^ (~e & g)) + K[t] + w[t]) | 0;\n      const t2 = ((r(a, 2) ^ r(a, 13) ^ r(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) | 0;\n      h = g; g = f; f = e; e = (d + t1) | 0; d = c; c = b; b = a; a = (t1 + t2) | 0;\n    }\n    H[0] = (H[0] + a) | 0; H[1] = (H[1] + b) | 0; H[2] = (H[2] + c) | 0; H[3] = (H[3] + d) | 0;\n    H[4] = (H[4] + e) | 0; H[5] = (H[5] + f) | 0; H[6] = (H[6] + g) | 0; H[7] = (H[7] + h) | 0;\n  }\n  const out = new Uint8Array(32);\n  H.forEach((v, i) => { out[4*i] = v >>> 24; out[4*i+1] = (v >>> 16) & 255; out[4*i+2] = (v >>> 8) & 255; out[4*i+3] = v & 255; });\n  return out;\n}\nconst utf8 = (s) => new TextEncoder().encode(s);\nfunction hmacHex(secreto, mensaje) {\n  let k = utf8(secreto);\n  if (k.length > 64) k = sha256(k);\n  const ki = new Uint8Array(64), ko = new Uint8Array(64);\n  for (let i = 0; i < 64; i++) { ki[i] = (k[i] || 0) ^ 0x36; ko[i] = (k[i] || 0) ^ 0x5c; }\n  const m = utf8(mensaje), interior = new Uint8Array(64 + m.length);\n  interior.set(ki); interior.set(m, 64);\n  const ih = sha256(interior), exterior = new Uint8Array(96);\n  exterior.set(ko); exterior.set(ih, 64);\n  return Array.from(sha256(exterior), (x) => x.toString(16).padStart(2, '0')).join('');\n}\n\nconst b = $input.first().json.body || {};\nlet u = String(b.u || '').trim(), t = String(b.t || '').trim();\nif ((!u || !t) && b.enlace) {\n  try {\n    const url = new URL(String(b.enlace).trim());\n    u = url.searchParams.get('u') || ''; t = url.searchParams.get('t') || '';\n  } catch (e) { /* enlace mal pegado: queda inválido */ }\n}\nconst secreto = $env.ENCAJE_SECRET;\nif (!secreto) throw new Error('Falta la variable ENCAJE_SECRET en el servicio n8n');\nconst valido = /^\\d{1,9}$/.test(u) && /^[0-9a-f]{64}$/i.test(t) && t.toLowerCase() === hmacHex(secreto, 'encaje:' + u);\nconst texto = String(b.texto || '').trim().slice(0, 15000);\nconst motivo = !valido ? 'enlace' : texto.length < 200 ? 'texto' : null;\nconst url = /^https?:\\/\\//i.test(String(b.url || '').trim()) ? String(b.url).trim().slice(0, 255) : null;\n\nreturn [{ json: {\n  valido: !motivo, motivo,\n  usuario: valido ? Number(u) : null, t: valido ? t.toLowerCase() : null,\n  texto, empresa_form: String(b.empresa || '').trim().slice(0, 100), url\n} }];\n"
+      },
+      "name": "Code: entrada",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ],
+      "id": "d0b773e2-b1bf-4294-b513-af0d64155f77"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4afb8852-a8b6-40e1-8f0f-ef757271ad0d",
+              "leftValue": "={{ $json.valido }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "IF entrada válida",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        440,
+        0
+      ],
+      "id": "ba2b6d01-e2d6-482f-9f0b-88ed5ef192a7"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT u.id AS usuario,\n       u.cv_texto,\n       md5(coalesce(u.cv_texto, '')) AS hash_cv,\n       coalesce((SELECT json_agg(json_build_object('tipo', p.tipo, 'clave', p.clave, 'valor', p.valor, 'peso', p.peso)\n                                 ORDER BY p.tipo, p.clave)\n                 FROM lanops.preferencias p WHERE p.usuario = u.id), '[]'::json) AS preferencias,\n       ev.id AS evaluador, ev.modelo, ev.prompt,\n       (SELECT valor::numeric FROM lanops.configuracion WHERE clave = 'umbral_banda_alta')  AS umbral_alta,\n       (SELECT valor::numeric FROM lanops.configuracion WHERE clave = 'umbral_banda_media') AS umbral_media\nFROM lanops.usuarios u\nCROSS JOIN (SELECT id, modelo, prompt FROM lanops.evaluadores WHERE tipo = 'ia' AND activo LIMIT 1) ev\nWHERE u.id = $1;",
+        "options": {
+          "queryReplacement": "={{ [ $('Code: entrada').first().json.usuario ] }}"
+        }
+      },
+      "name": "Postgres: contexto",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        660,
+        0
+      ],
+      "id": "6b89f726-3c98-4887-9caa-b8600dac091e"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n · workflow LANOPS-PEGAR-OFERTA · nodo \"Code: petición extraer\"\n// Modo: Run Once for All Items · JavaScript\n// Llamada 1 a Claude: convertir el texto pegado en los campos de VACANTES.\nconst ctx = $input.first().json;                       // \"Postgres: contexto\"\nif (!ctx.usuario) throw new Error('PEGAR-OFERTA: el usuario no existe');\nif (!ctx.cv_texto) throw new Error('PEGAR-OFERTA: el usuario no tiene CV (cv_texto vacío)');\nconst e = $('Code: entrada').first().json;\nconst SYSTEM = `Eres el módulo \"pegar una oferta\" de LANOPS. Recibes el texto de una oferta de empleo copiado de cualquier sitio.\nDevuelve SOLO un JSON con esta forma:\n{\"puesto\":\"\", \"empresa\":\"\", \"ubicacion\":\"\", \"contrato\":\"indefinido|temporal|practicas|otro|\", \"jornada\":\"completa|parcial|\", \"salario_min\":0, \"descripcion\":\"\"}\nReglas:\n- No inventes nada. Si un dato no está, deja \"\" (o 0 en salario_min).\n- puesto: el título del puesto, máximo 150 caracteres.\n- empresa: el nombre de la empresa que contrata (no el portal). Si es una ETT, el nombre de la ETT.\n- ubicacion: municipio, máximo 60 caracteres.\n- salario_min: salario bruto anual mínimo en euros, entero. Si viene mensual, multiplícalo por 14 solo si el texto dice 14 pagas; si no, por 12.\n- descripcion: el texto de la oferta limpio (funciones, requisitos, condiciones), sin publicidad del portal ni avisos de cookies, máximo 6000 caracteres.`;\nreturn [{ json: { cuerpo: {\n  model: ctx.modelo || 'claude-sonnet-5-5',\n  max_tokens: 8000,\n  system: SYSTEM,\n  messages: [{ role: 'user', content: (e.empresa_form ? 'Empresa (indicada por el usuario): ' + e.empresa_form + '\\n\\n' : '') + 'Oferta:\\n\\n' + e.texto }]\n} } }];\n"
+      },
+      "name": "Code: petición extraer",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ],
+      "id": "53f7a656-d9e7-40ce-b9da-b08a9b466380"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.cuerpo }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "name": "HTTP Request: Claude extraer",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1100,
+        0
+      ],
+      "id": "768fed85-502e-41f9-abd3-02ccf84b29fe"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n · workflow LANOPS-PEGAR-OFERTA · nodo \"Code: vacante\"\n// Modo: Run Once for All Items · JavaScript\n// Lee el JSON de la llamada 1 y prepara la fila de VACANTES (fuente 'usuario').\nconst texto = ($input.first().json.content || []).filter(b => b.type === 'text').map(b => b.text).join('');\nconst a = texto.indexOf('{'), z = texto.lastIndexOf('}');\nif (a < 0 || z < a) throw new Error('PEGAR-OFERTA: Claude no ha devuelto JSON. Respuesta: ' + texto.slice(0, 300));\nconst o = JSON.parse(texto.slice(a, z + 1));\nconst e = $('Code: entrada').first().json;\nconst txt = (v, n) => String(v ?? '').trim().slice(0, n);\nconst contrato = ['indefinido', 'temporal', 'practicas', 'otro'].includes(o.contrato) ? o.contrato : null;\nconst jornada = ['completa', 'parcial'].includes(o.jornada) ? o.jornada : null;\nconst salario = parseInt(o.salario_min, 10);\nconst puesto = txt(o.puesto, 150) || 'Puesto sin título';\nreturn [{ json: { datos: {\n  puesto,\n  empresa: txt(e.empresa_form || o.empresa, 100) || 'Empresa no indicada',\n  ubicacion: txt(o.ubicacion, 60) || null,\n  contrato, jornada,\n  salario_min: salario > 0 ? salario : null,\n  requisitos: txt(o.descripcion, 6000) || e.texto.slice(0, 6000),\n  url_origen: e.url\n} } }];\n"
+      },
+      "name": "Code: vacante",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        0
+      ],
+      "id": "029904a6-61a8-410b-a798-b636cef34dd9"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH d AS (SELECT $1::jsonb AS j),\nemp_existe AS (\n  SELECT e.id, e.nombre FROM lanops.empresas e, d WHERE lower(e.nombre) = lower(d.j->>'empresa') ORDER BY e.id LIMIT 1\n),\nemp_nueva AS (\n  INSERT INTO lanops.empresas (nombre, ciudad, anillo, tipo_lectura, activa)\n  SELECT d.j->>'empresa', d.j->>'ubicacion', 1, 'manual', true FROM d\n  WHERE NOT EXISTS (SELECT 1 FROM emp_existe)\n  RETURNING id\n),\nemp AS (SELECT id FROM emp_existe UNION ALL SELECT id FROM emp_nueva),\nins AS (\n  INSERT INTO lanops.vacantes (empresa, puesto, requisitos, contrato, jornada, ubicacion, salario_min,\n                               estado, fuente, url_origen, hash, fecha_pub, vista_en)\n  SELECT emp.id, d.j->>'puesto', d.j->>'requisitos', d.j->>'contrato', d.j->>'jornada', d.j->>'ubicacion',\n         (d.j->>'salario_min')::int, 'abierta', 'usuario', d.j->>'url_origen',\n         md5('usuario|' || lower(d.j->>'empresa') || '|' || lower(d.j->>'puesto') || '|' || (d.j->>'requisitos')),\n         now(), now()\n  FROM d, emp\n  ON CONFLICT (hash) DO UPDATE SET vista_en = now(), estado = 'abierta'\n  RETURNING id, puesto, ubicacion, url_origen, contrato, jornada, salario_min, requisitos\n)\nSELECT ins.id AS vacante, ins.puesto, coalesce((SELECT nombre FROM emp_existe), d.j->>'empresa') AS empresa_nombre, ins.ubicacion, ins.url_origen,\n       ins.contrato, ins.jornada, ins.salario_min, ins.requisitos\nFROM ins, d;",
+        "options": {
+          "queryReplacement": "={{ [ JSON.stringify($json.datos) ] }}"
+        }
+      },
+      "name": "Postgres: guardar vacante",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1540,
+        0
+      ],
+      "id": "4883e109-9b8c-4d40-8e4a-12181affb4fe"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n · workflow LANOPS-PEGAR-OFERTA · nodo \"Code: petición evaluar\"\n// Modo: Run Once for All Items · JavaScript\n// Llamada 2 a Claude: evaluar la vacante con el MISMO evaluador y formato que LANOPS-ENCAJE\n// (code-preparar.js de ENCAJE, para una sola vacante). El prompt de career-ops sale de EVALUADORES.\nconst ctx = $('Postgres: contexto').first().json;\nif (!ctx.prompt || !ctx.modelo) throw new Error('PEGAR-OFERTA: no hay evaluador IA activo con prompt y modelo');\nconst v = $input.first().json;                         // \"Postgres: guardar vacante\"\nconst prefs = ctx.preferencias || [];\nconst lineaPref = (p) => `- ${p.tipo} · ${p.clave} = ${p.valor}${p.tipo === 'peso' && p.peso ? ` (peso ${p.peso})` : ''}`;\nconst perfil = `<perfil>\\n${ctx.cv_texto}\\n</perfil>\\n\\n<preferencias>\\n${prefs.map(lineaPref).join('\\n') || '(sin preferencias)'}\\n</preferencias>`;\nconst fmt = (k, x) => (x === null || x === undefined || x === '' ? `${k}: no consta` : `${k}: ${x}`);\nreturn [{ json: {\n  usuario: ctx.usuario, vacante: v.vacante, evaluador: ctx.evaluador, hash_cv: ctx.hash_cv,\n  cuerpo: {\n    model: ctx.modelo,\n    max_tokens: 4096,\n    system: [{ type: 'text', text: ctx.prompt, cache_control: { type: 'ephemeral' } }],\n    messages: [{ role: 'user', content: [\n      { type: 'text', text: perfil },\n      { type: 'text', text: [\n        '<vacante>',\n        fmt('Puesto', v.puesto), fmt('Empresa', v.empresa_nombre), fmt('Ubicación', v.ubicacion),\n        fmt('Contrato', v.contrato), fmt('Jornada', v.jornada),\n        fmt('Salario mínimo anual', v.salario_min ? `${v.salario_min} €` : null),\n        'Descripción:', v.requisitos || 'no consta',\n        '</vacante>',\n      ].join('\\n') },\n    ]}],\n  },\n} }];\n"
+      },
+      "name": "Code: petición evaluar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        0
+      ],
+      "id": "82d62546-2d47-4d80-b455-2a92a1e7538e"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.cuerpo }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "name": "HTTP Request: Claude evaluar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1980,
+        0
+      ],
+      "id": "032e3977-8eee-40df-914b-1d2a3d1566c8"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n · workflow LANOPS-PEGAR-OFERTA · nodo \"Code: leer evaluación\"\n// Modo: Run Once for All Items · JavaScript\n// Igual que LANOPS-ENCAJE/code-leer.js para una sola respuesta: valida d1–d5 y global,\n// calcula global_personal con los pesos del usuario y la banda con los umbrales de CONFIGURACION.\nconst ctx = $('Postgres: contexto').first().json;\nconst pedida = $('Code: petición evaluar').first().json;\nconst alta  = Number(ctx.umbral_alta  ?? 4);\nconst media = Number(ctx.umbral_media ?? 3);\nconst MAPA = {\n  d1_match_cv:     ['euskera', 'idioma'],\n  d2_north_star:   ['puesto_objetivo', 'sector', 'situacion_actual'],\n  d3_compensacion: ['salario_min'],\n  d4_cultura:      ['estabilidad', 'modalidad', 'tamano', 'turnos', 'jornada', 'contrato',\n                    'municipio', 'radio_km', 'movilidad', 'fecha_inicio_max'],\n  d5_red_flags:    ['ett', 'empresa', 'palabra', 'permiso_trabajo'],\n};\nconst pesos = (ctx.preferencias || []).filter(p => p.tipo === 'peso' && p.peso);\nconst pesoDim = Object.fromEntries(Object.entries(MAPA).map(([d, claves]) => {\n  const ws = pesos.filter(p => claves.includes(p.clave)).map(p => Number(p.peso));\n  return [d, ws.length ? Math.max(...ws) : 3];\n}));\nconst DIM = Object.keys(MAPA);\nconst entero15 = (x) => Number.isInteger(x) && x >= 1 && x <= 5;\n\nconst texto = ($input.first().json.content || []).filter(b => b.type === 'text').map(b => b.text).join('').trim();\nconst limpio = texto.replace(/^```(?:json)?\\s*/i, '').replace(/\\s*```$/, '');\nconst r = JSON.parse(limpio.slice(limpio.indexOf('{'), limpio.lastIndexOf('}') + 1));\nfor (const d of DIM) if (!entero15(r[d])) throw new Error(`PEGAR-OFERTA: ${d} fuera de 1–5: ${r[d]}`);\nconst g = Number(r.global);\nif (!(g >= 1 && g <= 5)) throw new Error(`PEGAR-OFERTA: global fuera de 1–5: ${r.global}`);\nconst sumW = DIM.reduce((s, d) => s + pesoDim[d], 0);\nconst gp = DIM.reduce((s, d) => s + r[d] * pesoDim[d], 0) / sumW;\nreturn [{ json: {\n  usuario: pedida.usuario, vacante: pedida.vacante, evaluador: pedida.evaluador, hash_cv: pedida.hash_cv, ok: true,\n  d1_match_cv: r.d1_match_cv, d2_north_star: r.d2_north_star, d3_compensacion: r.d3_compensacion,\n  d4_cultura: r.d4_cultura, d5_red_flags: r.d5_red_flags,\n  global: Math.round(g * 10) / 10,\n  global_personal: Math.round(gp * 10) / 10,\n  banda: g >= alta ? 'Alta' : g >= media ? 'Media' : 'Baja',\n  explicacion: String(r.explicacion || '').slice(0, 2000),\n  hueco: String(r.hueco || '').slice(0, 1000)\n} }];\n"
+      },
+      "name": "Code: leer evaluación",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2200,
+        0
+      ],
+      "id": "9ca2cecf-6fd9-4b77-b72e-5e106cb7d31c"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH r AS (\n  SELECT * FROM jsonb_to_record($1::jsonb) AS x(\n    usuario int, vacante int, evaluador int, d1_match_cv int, d2_north_star int, d3_compensacion int,\n    d4_cultura int, d5_red_flags int, global real, global_personal real, banda text,\n    explicacion text, hueco text, hash_cv text)\n),\nins AS (\n  INSERT INTO lanops.evaluaciones\n    (usuario, vacante, evaluador, fecha, d1_match_cv, d2_north_star, d3_compensacion, d4_cultura,\n     d5_red_flags, global, global_personal, banda, explicacion, hueco, hash_cv)\n  SELECT usuario, vacante, evaluador, CURRENT_DATE, d1_match_cv, d2_north_star, d3_compensacion,\n         d4_cultura, d5_red_flags, global, global_personal, banda, explicacion, hueco, hash_cv\n  FROM r\n  ON CONFLICT (usuario, vacante, evaluador, hash_cv) DO NOTHING\n  RETURNING id, vacante, global, global_personal, banda, d1_match_cv, d2_north_star, d3_compensacion,\n            d4_cultura, d5_red_flags, explicacion, hueco, false AS ya_evaluada\n)\nSELECT * FROM ins\nUNION ALL\nSELECT e.id, e.vacante, e.global, e.global_personal, e.banda, e.d1_match_cv, e.d2_north_star, e.d3_compensacion,\n       e.d4_cultura, e.d5_red_flags, e.explicacion, e.hueco, true AS ya_evaluada\nFROM lanops.evaluaciones e JOIN r USING (usuario, vacante, evaluador, hash_cv)\nWHERE NOT EXISTS (SELECT 1 FROM ins);",
+        "options": {
+          "queryReplacement": "={{ [ JSON.stringify($json) ] }}"
+        }
+      },
+      "name": "Postgres: guardar evaluación",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        2420,
+        0
+      ],
+      "id": "adc040a3-35eb-47a0-bbf0-9f68168ed606"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n · workflow LANOPS-PEGAR-OFERTA · nodo \"Code: HTML\"\n// Modo: Run Once for All Items · JavaScript\n// Página con el resultado de la oferta pegada, con la misma tarjeta que LANOPS-ENCAJE/code-html.js\n// (estilo común, % = global × 20, banda con texto, 5 dimensiones). \"Pedir certificado\" solo con banda Alta o Media.\nconst N8N = 'https://n8n-production-3c20b.up.railway.app/webhook';\nconst r = $input.first().json;                          // \"Postgres: guardar evaluación\"\nconst v = $('Postgres: guardar vacante').first().json;\nconst e = $('Code: entrada').first().json;\nconst esc = (s) => String(s ?? '').replace(/[&<>\"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' }[c]));\nconst nota = (g) => Number(g).toFixed(1).replace('.', ',');\nconst pct = (g) => Math.round(Number(g) * 20);\nconst BANDA = { Alta: 'alto', Media: 'medio', Baja: 'bajo' };\nconst DIM = [['d1_match_cv', 'Encaje con tu CV'], ['d2_north_star', 'Lo que buscas'],\n             ['d3_compensacion', 'Salario'], ['d4_cultura', 'Empresa y condiciones'], ['d5_red_flags', 'Alertas (5 = ninguna)']];\nconst firma = `u=${e.usuario}&amp;t=${e.t}`;\nconst pedir = (r.banda === 'Alta' || r.banda === 'Media')\n  ? `<p><a class=\"boton\" href=\"${N8N}/certificar?${firma}&amp;v=${r.vacante}\">Pedir certificado de esta vacante</a></p>`\n  : `<p class=\"meta\">Certificado disponible solo con encaje alto o medio.</p>`;\n\nconst html = `<!doctype html><html lang=\"es\"><head><meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"robots\" content=\"noindex\">\n<title>Tu encaje con esta oferta · LANOPS</title>\n<link rel=\"stylesheet\" href=\"https://lanopsdmm.github.io/lanops/styles.css\"></head><body>\n<header><p class=\"marca\">LANOPS</p></header>\n<main>\n<h1>Tu encaje con esta oferta</h1>\n${r.ya_evaluada ? '<p class=\"aviso\">Ya habías pegado esta oferta: te enseñamos la evaluación que hicimos entonces.</p>' : ''}\n<article class=\"vac\">\n  <h2>${esc(v.puesto)}</h2>\n  <p class=\"meta\">${esc(v.empresa_nombre)} · ${esc(v.ubicacion || 'ubicación no consta')}</p>\n  <div class=\"barra\" aria-hidden=\"true\"><span style=\"width:${Math.min(100, Math.max(0, pct(r.global)))}%\"></span></div>\n  <p class=\"nota\"><strong>${pct(r.global)} % · ${nota(r.global)}/5</strong> <span class=\"banda banda-${BANDA[r.banda] || 'bajo'}\">encaje ${BANDA[r.banda] || esc(r.banda)}</span></p>\n  <ul class=\"dims\">${DIM.map(([k, t]) => `<li>${t}: <strong>${r[k]}/5</strong></li>`).join('')}</ul>\n  <p>${esc(r.explicacion).replace(/\\n/g, '<br>')}</p>\n  ${r.hueco ? `<p><strong>Para subir un punto:</strong> ${esc(r.hueco)}</p>` : ''}\n  ${v.url_origen ? `<p><a href=\"${esc(v.url_origen)}\" rel=\"noopener\">Ver la oferta original</a></p>` : ''}\n  ${pedir}\n</article>\n<p><a href=\"${N8N}/encaje?${firma}\">Ver todas mis ofertas</a> · <a href=\"https://lanopsdmm.github.io/lanops/pegar-oferta/?${firma}\">Pegar otra oferta</a></p>\n</main>\n<footer><p>% de congruencia = puntuación global × 20. La IA evalúa; tú decides. Rúbrica abierta de <a href=\"https://github.com/career-ops-hq/career-ops\">career-ops</a> (MIT).</p></footer>\n</body></html>`;\nreturn [{ json: { html } }];\n"
+      },
+      "name": "Code: HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2640,
+        0
+      ],
+      "id": "a915ccf0-99d0-486e-8ca7-c0909c0665e7"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2860,
+        0
+      ],
+      "id": "91eb1781-121f-40a4-addd-a08b8acca65b"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n · workflow LANOPS-PEGAR-OFERTA · nodo \"Code: página de error\"\n// Modo: Run Once for All Items · JavaScript\n// Rama \"false\" de \"IF entrada válida\": enlace personal no válido o texto demasiado corto.\nconst m = $input.first().json.motivo;\nconst msg = m === 'texto'\n  ? 'El texto de la oferta es demasiado corto. Pega la oferta completa (puesto, requisitos, condiciones).'\n  : 'No reconocemos tu enlace personal. Copia el enlace completo de \"Ver mis ofertas\" que te dimos al crear tu perfil.';\nconst html = `<!doctype html><html lang=\"es\"><head><meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"robots\" content=\"noindex\">\n<title>No se ha podido evaluar · LANOPS</title>\n<link rel=\"stylesheet\" href=\"https://lanopsdmm.github.io/lanops/styles.css\"></head><body>\n<header><p class=\"marca\">LANOPS</p></header>\n<main><h1>No se ha podido evaluar la oferta</h1>\n<p class=\"aviso\">${msg}</p>\n<p><a href=\"https://lanopsdmm.github.io/lanops/pegar-oferta/\">Volver a intentarlo</a> · <a href=\"https://lanopsdmm.github.io/lanops/alta/\">Crear mi perfil</a></p>\n</main></body></html>`;\nreturn [{ json: { html } }];\n"
+      },
+      "name": "Code: página de error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        220
+      ],
+      "id": "a5e82d45-3406-47c9-a01b-4adac067b00d"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          },
+          "responseCode": 400
+        }
+      },
+      "name": "Respond error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1100,
+        220
+      ],
+      "id": "415fcafe-dae0-4eb2-adec-7d37d2996995"
+    }
+  ],
+  "connections": {
+    "Webhook /pegar-oferta": {
+      "main": [
+        [
+          {
+            "node": "Code: entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: entrada": {
+      "main": [
+        [
+          {
+            "node": "IF entrada válida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF entrada válida": {
+      "main": [
+        [
+          {
+            "node": "Postgres: contexto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code: página de error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: página de error": {
+      "main": [
+        [
+          {
+            "node": "Respond error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres: contexto": {
+      "main": [
+        [
+          {
+            "node": "Code: petición extraer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: petición extraer": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request: Claude extraer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request: Claude extraer": {
+      "main": [
+        [
+          {
+            "node": "Code: vacante",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: vacante": {
+      "main": [
+        [
+          {
+            "node": "Postgres: guardar vacante",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres: guardar vacante": {
+      "main": [
+        [
+          {
+            "node": "Code: petición evaluar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: petición evaluar": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request: Claude evaluar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request: Claude evaluar": {
+      "main": [
+        [
+          {
+            "node": "Code: leer evaluación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: leer evaluación": {
+      "main": [
+        [
+          {
+            "node": "Postgres: guardar evaluación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres: guardar evaluación": {
+      "main": [
+        [
+          {
+            "node": "Code: HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: HTML": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
