@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Protección de datos · LANOPS</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+  /* Solo reglas propias de esta página; el resto viene de ../styles.css */
+  section{margin:1.8rem 0}
+  h2{font-size:1.3rem;margin-bottom:.5rem}
+  .lista{padding-left:1.2rem} .lista li{margin:.3rem 0}
+  table{border-collapse:collapse;width:100%;margin:.6rem 0;background:var(--superficie)}
+  th,td{border:1px solid var(--borde);padding:.45rem .6rem;text-align:left;vertical-align:top}
+  th{font-weight:600}
+  .resumen{background:var(--superficie);border:1px solid var(--borde);border-left:4px solid var(--marca);border-radius:var(--radio);padding:1rem 1.2rem}
+</style>
+</head>
+<body>
+<header><p class="marca"><a class="marca" href="../">LANOPS</a></p></header>
+
+<main>
+  <h1>Protección de datos</h1>
+  <p class="meta">Información sobre el tratamiento de tus datos personales (artículo 13 del Reglamento General de Protección de Datos, RGPD). Última actualización: 10 de octubre de 2026.</p>
+
+  <div class="resumen">
+    <p><strong>En resumen:</strong> usamos tu CV y lo que buscas para decirte con qué ofertas encajas y, si lo pides, emitir un certificado. No guardamos tu DNI, tu fecha de nacimiento ni tu dirección. Tus datos están en servidores de la Unión Europea; para evaluar tu encaje, el texto de tu CV pasa por la IA de Anthropic (Claude). No vendemos ni cedemos tus datos a empresas: una empresa solo ve tu certificado si tú se lo envías. Puedes pedir que borremos tus datos cuando quieras.</p>
+  </div>
+
+  <section aria-labelledby="responsable">
+    <h2 id="responsable">1. Quién es responsable</h2>
+    <p>LANOPS es un proyecto académico de cuatro estudiantes de Ingeniería de Tecnun (Universidad de Navarra), presentado a Donostia Meeting Minds 2026. No es una empresa.</p>
+    <p><strong>Contacto para cualquier cuestión sobre tus datos:</strong> <a id="contacto" href="mailto:lanops.gipuzkoa@gmail.com">lanops.gipuzkoa@gmail.com</a></p>
+  </section>
+
+  <section aria-labelledby="que-datos">
+    <h2 id="que-datos">2. Qué datos tratamos</h2>
+    <ul class="lista">
+      <li><strong>Los que nos das al crear tu perfil:</strong> nombre, email, el CV en PDF, lo que buscas (puesto, municipios, jornada, contrato, salario mínimo, euskera, lo que no quieres ver) y, si los das, tu email institucional y un código de recomendación.</li>
+      <li><strong>Lo que sacamos de tu CV:</strong> ciudad, titulación, habilidades con su nivel y el CV reescrito en texto. <strong>No guardamos el PDF</strong>, ni tu DNI, fecha de nacimiento o dirección postal aunque aparezcan en el CV.</li>
+      <li><strong>Lo que genera el servicio:</strong> las evaluaciones de encaje con cada oferta, las ofertas que descartas y por qué (para aprender lo que no te interesa), las ofertas que pegas y los certificados que pides, con cuántas veces se han verificado.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="para-que">
+    <h2 id="para-que">3. Para qué y con qué base</h2>
+    <p>Para calcular y explicarte tu encaje con ofertas de empleo, aprender de tus descartes, emitir los certificados que pidas y permitir que la empresa a la que se los envíes compruebe que son auténticos. También, de forma agregada y sin identificarte, para medir cómo funciona el proyecto.</p>
+    <p>La base es <strong>tu consentimiento</strong> (artículo 6.1.a del RGPD), que das al marcar la casilla al crear tu perfil. Puedes retirarlo cuando quieras; retirarlo no afecta a lo hecho antes.</p>
+    <p>La evaluación la hace una IA, pero <strong>no tomamos ninguna decisión por ti</strong>: LANOPS no envía nada a ninguna empresa. Tú decides a qué ofertas te presentas y a quién mandas tu certificado.</p>
+  </section>
+
+  <section aria-labelledby="quien-accede">
+    <h2 id="quien-accede">4. Quién trata tus datos con nosotros</h2>
+    <table>
+      <thead><tr><th scope="col">Servicio</th><th scope="col">Para qué</th><th scope="col">Dónde</th></tr></thead>
+      <tbody>
+        <tr><td>Railway</td><td>Aloja la base de datos y los procesos de LANOPS</td><td>Unión Europea (región EU West)</td></tr>
+        <tr><td>Anthropic (Claude)</td><td>Lee tu CV y las ofertas para estructurarlos y evaluar el encaje</td><td>Estados Unidos: es una transferencia internacional de datos</td></tr>
+        <tr><td>GitHub Pages</td><td>Sirve estas páginas web; no recibe los datos de tu perfil</td><td>Estados Unidos</td></tr>
+      </tbody>
+    </table>
+    <p>Nadie más recibe tus datos. Una empresa solo ve tu certificado (nombre, oferta, encaje y si tu perfil está verificado) cuando tú le das el código o el QR.</p>
+  </section>
+
+  <section aria-labelledby="cuanto-tiempo">
+    <h2 id="cuanto-tiempo">5. Cuánto tiempo</h2>
+    <p>Mientras tengas tu perfil y, como máximo, mientras dure el proyecto. Cada certificado caduca a los 30 días. Si pides que borremos tus datos, los borramos.</p>
+  </section>
+
+  <section aria-labelledby="derechos">
+    <h2 id="derechos">6. Tus derechos</h2>
+    <p>Puedes pedir <strong>acceso</strong> a tus datos, <strong>rectificarlos</strong> (también volviendo a crear tu perfil con el mismo email), <strong>suprimirlos</strong>, <strong>limitar</strong> u <strong>oponerte</strong> a su tratamiento y la <strong>portabilidad</strong>, escribiendo al contacto del punto 1. Si crees que no los tratamos bien, puedes reclamar ante la <a href="https://www.aepd.es">Agencia Española de Protección de Datos</a>.</p>
+    <p>Para crear un perfil en LANOPS debes tener <strong>al menos 14 años</strong>.</p>
+  </section>
+</main>
+
+<footer>
+  <p><a href="../">Volver a LANOPS</a> · <a href="../alta/">Crear mi perfil</a></p>
+</footer>
+</body>
+</html>
