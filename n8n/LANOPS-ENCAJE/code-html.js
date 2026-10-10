@@ -1,6 +1,8 @@
 // n8n · workflow LANOPS-ENCAJE · nodo "Code: HTML"
 // Modo: Run Once for All Items · JavaScript · Settings del nodo previo "Postgres: lista": Always Output Data ON
 // Página accesible (decisión 21): HTML semántico, lang, contraste, sin depender del color.
+// [10-oct] Estilo común "Cálido": enlaza https://lanopsdmm.github.io/lanops/styles.css (mismo archivo que la landing de Javi).
+// Si Pages no respondiera, la página se sigue leyendo sin estilo. Solo queda en línea la regla funcional de "Cuéntanos por qué".
 const filas = $input.all().map(i => i.json).filter(r => r.vacante);
 // [07-oct] Botón "Pedir certificado" (decisión 99): reutiliza el enlace firmado del usuario. Solo banda Alta o Media (decisión 100).
 const q = $('Webhook /encaje').first().json.query || {};
@@ -42,7 +44,8 @@ const tarjeta = (r, n) => `
 <li class="vac">
   <h2><span class="n">${n}.</span> ${esc(r.puesto)}</h2>
   <p class="meta">${esc(empresa(r))} · ${esc(r.ubicacion || 'ubicación no consta')}</p>
-  <p class="nota"><strong>${pct(r.global)} % · ${nota(r.global)}/5</strong> — encaje ${({ Alta: 'alto', Media: 'medio', Baja: 'bajo' })[r.banda] || esc(r.banda)}</p>
+  <div class="barra" aria-hidden="true"><span style="width:${Math.min(100, Math.max(0, pct(r.global)))}%"></span></div>
+  <p class="nota"><strong>${pct(r.global)} % · ${nota(r.global)}/5</strong> <span class="banda banda-${({ Alta: 'alto', Media: 'medio', Baja: 'bajo' })[r.banda] || 'bajo'}">encaje ${({ Alta: 'alto', Media: 'medio', Baja: 'bajo' })[r.banda] || esc(r.banda)}</span></p>
   <ul class="dims">${DIM.map(([k, t]) => `<li>${t}: <strong>${r[k]}/5</strong></li>`).join('')}</ul>
   <p>${esc(r.explicacion).replace(/\n/g, '<br>')}</p>
   ${r.hueco ? `<p><strong>Para subir un punto:</strong> ${esc(r.hueco)}</p>` : ''}
@@ -55,24 +58,14 @@ const html = `<!doctype html>
 <html lang="es"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tus vacantes · LANOPS</title>
-<style>
- body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;max-width:46rem;margin:0 auto;padding:1rem;line-height:1.5;color:#1a1a1a;background:#fff}
- h1{font-size:1.6rem} h2{font-size:1.15rem;margin:.2rem 0} .n{color:#555}
- ol{list-style:none;padding:0} .vac{border:1px solid #888;border-radius:.5rem;padding:1rem;margin:0 0 1rem}
- .meta{color:#444;margin:0} .nota{font-size:1.1rem} .dims{padding-left:1.2rem;margin:.3rem 0}
- a{color:#0b4fa8} a:focus{outline:3px solid #0b4fa8;outline-offset:2px}
- .descartar{margin:.5rem 0 0} .descartar summary{cursor:pointer;color:#0b4fa8} .descartar p{margin:.4rem 0}
- .descartar select,.descartar input,.descartar button{font:inherit} .descartar input{max-width:100%}
- .descartar:has(option[value=""]:checked) .porque{display:none}
- summary:focus,input:focus{outline:3px solid #0b4fa8;outline-offset:2px}
- .descartar button{padding:.25rem .7rem;border:2px solid #0b4fa8;border-radius:.4rem;background:#fff;color:#0b4fa8;cursor:pointer}
- button:focus,select:focus{outline:3px solid #0b4fa8;outline-offset:2px}
- .boton{display:inline-block;padding:.4rem .9rem;border:2px solid #0b4fa8;border-radius:.4rem;background:#0b4fa8;color:#fff;text-decoration:none}
- footer{font-size:.85rem;color:#444;border-top:1px solid #ccc;margin-top:2rem;padding-top:.5rem}
-</style></head><body>
-<header><h1>Tus vacantes con más encaje</h1>
-<p>${filas.length ? `${filas.length} vacantes abiertas, ordenadas por lo que tú priorizas.` : vacia}</p>${aprendido}</header>
-<main><ol>${filas.map((r, i) => tarjeta(r, i + 1)).join('')}</ol></main>
+<link rel="stylesheet" href="https://lanopsdmm.github.io/lanops/styles.css">
+<style>.descartar:has(option[value=""]:checked) .porque{display:none}</style>
+</head><body>
+<header><p class="marca">LANOPS</p></header>
+<main>
+<h1>Tus vacantes con más encaje</h1>
+<p>${filas.length ? `${filas.length} vacantes abiertas, ordenadas por lo que tú priorizas.` : vacia}</p>${aprendido}
+<ol class="vacs">${filas.map((r, i) => tarjeta(r, i + 1)).join('')}</ol></main>
 <footer><p>La IA evalúa; tú decides. Puntuación con la rúbrica abierta de career-ops (MIT). Ofertas de Lanbide: Fuente Lanbide / Open Data Euskadi (CC BY).</p></footer>
 <script>
 // "Cuéntanos por qué" es obligatorio solo con "otro motivo" (si no hay JavaScript, FEEDBACK lo comprueba igualmente)

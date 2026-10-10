@@ -1,5 +1,6 @@
 // n8n · workflow LANOPS-FEEDBACK · nodo "Code: HTML"  (detrás de "Postgres: aprendido")
 // Modo: Run Once for All Items · JavaScript
+// [10-oct] Estilo común "Cálido" (decisiones 122–123): enlaza https://lanopsdmm.github.io/lanops/styles.css; sin <style> propio.
 // Página "Lo que LANOPS ha aprendido de ti": mensaje de la acción + reglas aprendidas (quitar) + descartes (recuperar)
 // + perfil de búsqueda del alta (solo consulta: se cambia en el alta, Pieza 6).
 // Usa $('Code: entrada'), $('Postgres: aplicar'), $('Postgres: aprender') y, si corrió, $('Code: leer regla'):
@@ -106,19 +107,11 @@ const html = `<!doctype html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>Lo que LANOPS ha aprendido de ti</title>
-<style>
- body{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;max-width:46rem;margin:0 auto;padding:1rem;line-height:1.5;color:#1a1a1a;background:#fff}
- h1{font-size:1.6rem} h2{font-size:1.25rem;margin-top:2rem} h3{font-size:1.05rem;margin:.2rem 0}
- ul{padding-left:1.2rem} .vacs{list-style:none;padding:0} .vac{border:1px solid #888;border-radius:.5rem;padding:.8rem 1rem;margin:0 0 .8rem}
- .meta{color:#444;margin:.2rem 0} form{margin:.4rem 0 .8rem}
- .etq{font-size:.85rem;border:1px solid #555;border-radius:.3rem;padding:0 .3rem;color:#333}
- .aviso{border-left:4px solid #0b4fa8;background:#eef4fc;padding:.6rem 1rem;margin:1rem 0}
- a{color:#0b4fa8} a:focus,button:focus{outline:3px solid #0b4fa8;outline-offset:2px}
- button{font:inherit;padding:.3rem .8rem;border:2px solid #0b4fa8;border-radius:.4rem;background:#fff;color:#0b4fa8;cursor:pointer}
- footer{font-size:.85rem;color:#444;border-top:1px solid #ccc;margin-top:2rem;padding-top:.5rem}
-</style></head><body>
-<header><h1>Lo que LANOPS ha aprendido de ti</h1>${volver}</header>
+<link rel="stylesheet" href="https://lanopsdmm.github.io/lanops/styles.css">
+</head><body>
+<header><p class="marca">LANOPS</p></header>
 <main>
+<h1>Lo que LANOPS ha aprendido de ti</h1>${volver}
 ${msg.length ? `<div class="aviso" role="status">${msg.map(m => `<p>${m}</p>`).join('')}</div>` : ''}
 <p>Cuando descartas una oferta y nos dices por qué, LANOPS aprende para no enseñarte ofertas parecidas:
 si es por <em>la empresa</em>, dejamos de enseñarte esa empresa; si descartas ${umbral} ofertas del mismo sector por
