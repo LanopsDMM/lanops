@@ -43,10 +43,13 @@ No hay un workflow aparte: va dentro del alta.
 - **Dónde se ve el código:** en la página final del alta ("Recomienda a alguien"), con cuántas recomendaciones le quedan. También aparecen los enlaces a crear perfil y a pegar una oferta.
 - **Cuándo cuenta la recomendación:** `Postgres: guardar` pone `usuarios.recomendado_por` solo si el que recomienda existe, no es la misma persona (otro email) y no ha llegado a `CONFIGURACION.cupo_recomendaciones` (3). Un `recomendado_por` ya guardado no cambia.
 - **Si el código no vale** o se ha agotado el cupo, el alta se hace igual y se avisa al usuario.
-- Probado en Node (código válido, código falso, sin código) y en un Postgres 16 local: 3 recomendaciones aceptadas, la 4.ª rechazada y la auto-recomendación rechazada.
+- **`probado en real` [10-oct, Javi]:**
+  - La re-alta de Ane (202) enseña su código `R202-63C7EABF`.
+  - El alta de **Mikel Arrieta (demo)**, persona ficticia, usuario **204**, `mikel.arrieta@ejemplo.lanops.eus`, con ese código → "Has entrado recomendado/a por otra persona de LANOPS".
+  - Antes se probó en Node (código válido, código falso, sin código) y en un Postgres 16 local: 3 recomendaciones aceptadas, la 4.ª rechazada y la auto-recomendación rechazada.
 
 ## Pendiente
 
-- El texto RGPD de `alta/index.html` es un aviso breve. El texto completo es el ítem 9.
+- [10-oct] Texto completo de protección de datos en `lanops/privacidad/` (ítem 9); la casilla del alta enlaza a él.
 - Si algo falla, n8n responde con su error genérico (no hay página de error propia).
 - Preguntas sobre el CV en una segunda página (decisión 121): pendiente; ahora se enseñan como consejo.
