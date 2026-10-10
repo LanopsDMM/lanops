@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LANOPS · Demuestra que encajas</title>
+<meta name="description" content="LANOPS lee tu CV y lo que buscas, te dice con qué ofertas de Gipuzkoa encajas y por qué, y te da un certificado que la empresa puede comprobar.">
+<link rel="stylesheet" href="styles.css">
+<style>
+  /* Solo reglas propias de la landing; el resto viene de styles.css */
+  .saltar{position:absolute;left:-999px;top:0;background:var(--superficie);padding:.5rem 1rem;z-index:10}
+  .saltar:focus{left:1rem}
+  .portada{padding:1.5rem 0 1rem}
+  .portada h1{font-size:2.3rem;margin:.2rem 0 .8rem}
+  .entradilla{font-size:1.15rem;color:var(--texto-2);max-width:38rem}
+  .acciones{display:flex;flex-wrap:wrap;gap:.8rem;margin:1.4rem 0 .6rem}
+  .acciones .secundario{background:var(--superficie);color:var(--marca)}
+  .acciones .secundario:hover{background:var(--alto-bg);color:var(--marca-osc)}
+  .pequeno{font-size:.9rem;color:var(--texto-2)}
+  section{margin:2.6rem 0}
+  section>h2{font-size:1.5rem;margin-bottom:.8rem}
+  .pasos{list-style:none;padding:0;display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr))}
+  .pasos li{background:var(--superficie);border:1px solid var(--borde);border-radius:var(--radio);padding:1rem 1.1rem}
+  .pasos h3{margin:.1rem 0 .4rem;color:var(--marca)}
+  .lista{padding-left:1.2rem} .lista li{margin:.3rem 0}
+  .recuadro{background:var(--superficie);border:1px solid var(--borde);border-left:4px solid var(--marca);border-radius:var(--radio);padding:1rem 1.2rem}
+</style>
+</head>
+<body>
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+
+<header><p class="marca">LANOPS</p></header>
+
+<main id="contenido">
+
+  <div class="portada">
+    <h1>Demuestra que encajas.</h1>
+    <p class="entradilla">LANOPS lee tu CV y lo que buscas de verdad, te dice con qué ofertas de Gipuzkoa encajas y por qué, y te da un certificado que la empresa puede comprobar en un clic.</p>
+    <div class="acciones">
+      <a class="boton" href="https://n8n-production-3c20b.up.railway.app/form/alta">Crear mi perfil</a>
+      <a class="boton secundario" href="https://n8n-production-3c20b.up.railway.app/form/pegar-oferta">Pegar una oferta</a>
+    </div>
+    <p class="pequeno">Entrada abierta: cualquiera puede crear su perfil. Si tienes un código de recomendación o un email institucional, puedes añadirlo para que tu perfil salga como verificado; es opcional.</p>
+  </div>
+
+  <section aria-labelledby="como">
+    <h2 id="como">Cómo funciona</h2>
+    <ol class="pasos">
+      <li>
+        <h3>1 · Tu perfil, a tu medida</h3>
+        <p>Subes tu CV y nos dices qué no es negociable, qué prefieres y qué no quieres. Filtros más finos que los de cualquier portal.</p>
+      </li>
+      <li>
+        <h3>2 · Encaje explicado</h3>
+        <p>Cruzamos tu perfil con ofertas reales de Lanbide y de webs de empresas de Gipuzkoa. Cada una lleva su % de encaje, cinco dimensiones y lo que te falta.</p>
+      </li>
+      <li>
+        <h3>3 · Certificado verificable</h3>
+        <p>Para la oferta que elijas, pides tu certificado: «88&nbsp;% · 4,40/5». La empresa escanea el QR y comprueba que es auténtico, sin cuenta ni registro.</p>
+      </li>
+    </ol>
+    <p>Y aprende de ti: cuando descartas una oferta y nos dices por qué, LANOPS ajusta lo que te enseña. Puedes ver y quitar lo que ha aprendido cuando quieras.</p>
+  </section>
+
+  <section aria-labelledby="empresas">
+    <h2 id="empresas">Si eres una empresa</h2>
+    <p>No necesitas cuenta. Quien te envía un certificado de LANOPS te está diciendo cuánto encaja con tu vacante y por qué. Escanea su QR o escribe el código en la <a href="verificar/">página de verificación</a> y verás si es válido, quién lo emite y qué parte del perfil está verificada.</p>
+  </section>
+
+  <section aria-labelledby="principios">
+    <h2 id="principios">Lo que no hacemos</h2>
+    <ul class="lista">
+      <li><strong>No decidimos por ti.</strong> La IA filtra y evalúa; la persona decide. Nada se envía sin tu clic.</li>
+      <li><strong>No vendemos el ranking.</strong> Las empresas no pagan por salir primero ni por publicar.</li>
+      <li><strong>No inventamos nada de tu CV.</strong> El certificado solo afirma lo que se puede comprobar.</li>
+      <li><strong>No copiamos portales comerciales.</strong> Leemos fuentes públicas con licencia de reutilización (Lanbide Open Data) y las webs de empleo de las propias empresas.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="local">
+    <h2 id="local">Motor abierto: ¿prefieres no subir tu CV?</h2>
+    <div class="recuadro">
+      <p>LANOPS es código abierto. El mismo motor que puntúa tu encaje en la web puede correr en tu ordenador: tu CV, las ofertas y tus candidaturas se quedan en una carpeta tuya y no pasan por nuestros servidores.</p>
+      <p>Pegas una oferta —de la web de una empresa, de Lanbide o de donde sea— y te dice cuánto encajas, qué te falta y si merece la pena postular. Con un modelo de IA local (Ollama) tu CV no sale de tu equipo.</p>
+      <p>Lo único que no hace en local es el certificado verificable: ese necesita el registro de LANOPS para que la empresa pueda comprobarlo.</p>
+      <p><strong>Cómo empezar:</strong> sigue los pasos de <a href="https://github.com/LanopsDMM/motor/blob/main/README-es.md">LANOPS en local</a> (necesitas Node.js y un asistente de IA en tu terminal).</p>
+      <p><strong>Y cuando tengas tu lista de empresas:</strong> el <a href="https://github.com/LanopsDMM/lanops/tree/main/local/kit">kit de candidaturas</a> te ayuda a llevar cada candidatura: CV adaptado, dosier de la empresa y registro, todo en tu carpeta.</p>
+    </div>
+  </section>
+
+  <section aria-labelledby="privacidad">
+    <h2 id="privacidad">Tus datos</h2>
+    <ul class="lista">
+      <li>Tus datos se guardan en servidores de la Unión Europea.</li>
+      <li>Solo pedimos lo que el encaje necesita: nunca DNI, fecha de nacimiento ni dirección postal.</li>
+      <li>Tu certificado es tuyo: solo lo ve quien tú decides.</li>
+      <li>Puedes pedir que borremos tus datos cuando quieras.</li>
+    </ul>
+    <p class="pequeno">Antes de crear tu perfil te mostramos el texto completo de protección de datos y te pedimos tu consentimiento.</p>
+  </section>
+
+  <section aria-labelledby="quienes">
+    <h2 id="quienes">Quiénes somos</h2>
+    <p>Somos Rodri, Santi, Marcos y Javi, estudiantes de Ingeniería en Tecnun (Universidad de Navarra), en Donostia. Empezamos por Gipuzkoa porque es donde vivimos y donde vemos a gente con talento que no consigue demostrar que encaja: recién graduados, personas que cambian de sector, que llegan de fuera o que vuelven al trabajo. LANOPS es nuestro proyecto para Donostia Meeting Minds 2026.</p>
+  </section>
+
+</main>
+
+<footer>
+  <p>Motor basado en <a href="https://github.com/career-ops-hq/career-ops">career-ops</a> (MIT). La IA evalúa; tú decides.</p>
+  <p>Código: <a href="https://github.com/LanopsDMM/lanops">github.com/LanopsDMM/lanops</a> · <a href="verificar/">Verificar un certificado</a></p>
+</footer>
+</body>
+</html>
