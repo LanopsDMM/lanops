@@ -1,0 +1,44 @@
+# LANOPS-ALTA (n8n)
+
+Alta de usuarios (Pieza 6, dueño Javi). El botón "Crear mi perfil" de la landing lleva a
+`https://lanopsdmm.github.io/lanops/alta/` (`lanops/alta/index.html`). Esa página envía el formulario
+(multipart, con el PDF) a `https://n8n-production-3c20b.up.railway.app/webhook/alta`.
+
+Estado: **[10-oct-2026] `construido`**. El código está probado fuera de n8n: el SQL contra el esquema real en un Postgres 16 local, y la firma del enlace contra `node:crypto`. No está probado en n8n.
+
+**Por qué Webhook y no Form Trigger [10-oct]:** la primera versión usaba un Form Trigger y una segunda página con las
+preguntas (n8n Form). Con ella, Claude respondía y la ejecución quedaba esperando en "Form: preguntas", pero el
+navegador mostraba "Problem submitting response". En producción no llegaba a crear ninguna ejecución. Causa no
+confirmada. Se cambia al patrón de ENCAJE (Webhook + Respond to Webhook con HTML), que sí funciona en este servidor.
+Las preguntas sobre el CV ("huecos") se enseñan al final como consejo, en vez de preguntarse.
+
+| # | Nodo n8n | Archivo | Configuración |
+|---|---|---|---|
+| 1 | `Webhook /alta` | — | POST · Path `alta` · Respond: Using 'Respond to Webhook' Node |
+| 2 | `Code: CV` | `code-cv.js` | renombra el PDF recibido a binario `cv` |
+| 3 | `Extract from File: PDF` | — | Extract From PDF · Input Binary Field `cv` |
+| 4 | `Code: petición 1` | `code-peticion-1.js` | prompt de la llamada 1 (skill, `prompts/alta-estructurar.md`) |
+| 5 | `HTTP Request: Claude` | — | igual que en ENCAJE: POST `https://api.anthropic.com/v1/messages`, credencial Anthropic, cabecera `anthropic-version: 2023-06-01`, body `{{ $json.cuerpo }}`, Timeout 120000 |
+| 6 | `Code: leer 1` | `code-leer-1.js` | CV estructurado + huecos |
+| 7 | `Code: preparar` | `code-preparar.js` | lee `$('Webhook /alta')` y `$('Code: leer 1')`: **los nombres deben ser exactos**; campos = `name=` de `alta/index.html` |
+| 8 | `Postgres: guardar` | `guardar.sql` | Execute Query · credencial Postgres · Query Parameters `{{ [ JSON.stringify($json.datos) ] }}` |
+| 9 | `Code: enlace` | `code-enlace.js` | HMAC con `$env.ENCAJE_SECRET` (mismo cálculo que `LANOPS-ENCAJE/code-firma.js`) + página HTML final |
+| 10 | `Respond to Webhook` | — | Text · `{{ $json.html }}` · cabecera `Content-Type: text/html; charset=utf-8` |
+## Qué guarda
+
+- **USUARIOS:** nombre y email del formulario; ciudad, titulación y `cv_texto` (sin DNI, fecha de nacimiento ni dirección) los saca Claude. `consentimiento_fecha` = ahora.
+- **HABILIDADES / USUARIO_HABILIDAD:** se crean las habilidades que no existen; si dos se llaman igual salvo mayúsculas, se tratan como la misma.
+- **PREFERENCIAS:** `puesto_objetivo` (peso 5) y los filtros `duro` (municipio, jornada, contrato salvo "Indiferente", salario mínimo y euskera salvo "No lo hablo"). Las exclusiones se guardan como `palabra`.
+- **VERIFICACIONES:** si el dominio del email institucional (o, si no hay, del email) es el `dominio_email` de una ENTIDAD activa, se crea una verificación `email_institucional` en `pendiente` y el usuario pasa a `pendiente`. No hay correo para confirmarla.
+- **Mismo email otra vez = editar el perfil** (decisión 116):
+  - se reemplazan el CV, las habilidades y las preferencias `duro`/`peso`;
+  - las exclusiones se suman, para no borrar lo que haya aprendido FEEDBACK;
+  - un estado `pendiente`, `verificado` o `revocado` no baja.
+  - Riesgo: quien conozca tu email puede cambiar tu perfil (no se confirma el email).
+
+## Pendiente
+
+- El código de recomendación (`recomendado_por`) no se pide todavía: no existen los códigos, porque `LANOPS-INVITAR` no está hecho.
+- El texto RGPD de `alta/index.html` es un aviso breve. El texto completo es el ítem 9.
+- Si algo falla, n8n responde con su error genérico (no hay página de error propia).
+- Preguntas sobre el CV en una segunda página (decisión 121): pendiente; ahora se enseñan como consejo.

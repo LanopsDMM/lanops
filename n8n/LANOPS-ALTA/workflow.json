@@ -1,0 +1,279 @@
+{
+  "name": "LANOPS-ALTA",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "alta",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook /alta",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b1f8bd12-51c8-4492-8985-cb8be03fb104",
+      "webhookId": "fc390e8c-ba9d-4e3d-8961-4844f54f1567"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n · workflow LANOPS-ALTA · nodo \"Code: CV\"\n// Modo: Run Once for All Items · JavaScript\n// El formulario de alta (lanops/alta/index.html) envía multipart/form-data al nodo \"Webhook /alta\".\n// Aquí se busca el archivo que llegue (sea cual sea su nombre) y se renombra a \"cv\" para Extract from File.\nconst item = $input.first();\nconst claves = Object.keys(item.binary || {});\nif (!claves.length) throw new Error('ALTA: no ha llegado ningún archivo. Sube tu CV en PDF.');\nreturn [{ json: item.json, binary: { cv: item.binary[claves[0]] } }];\n"
+      },
+      "name": "Code: CV",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ],
+      "id": "2d79394a-296f-4834-9da5-1e6cbc0d1b91"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "cv",
+        "options": {}
+      },
+      "name": "Extract from File: PDF",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        440,
+        0
+      ],
+      "id": "22e5fb3c-cdd1-4821-a587-3e39ea0a69cb"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n · workflow LANOPS-ALTA · nodo \"Code: petición 1\"\n// Modo: Run Once for All Items · JavaScript\n// Prepara la llamada 1 a Claude: estructurar el CV y detectar huecos (prompt en la skill,\n// references/prompts/alta-estructurar.md). El texto del CV viene de \"Extract from File: PDF\".\nconst MODELO = 'claude-sonnet-5-5';   // el mismo que el evaluador de ENCAJE\nconst texto = String($input.first().json.text || '').trim();\nif (texto.length < 200) {\n  throw new Error('ALTA: no se ha podido leer texto del PDF (¿es un escaneo?). Sube el CV exportado desde Word o similar.');\n}\nconst SYSTEM = `Eres el módulo de alta de LANOPS, una red de empleo en Gipuzkoa. Recibes el texto de un CV.\nDevuelve SOLO un JSON con esta forma:\n{\n  \"nombre\": \"\", \"ciudad\": \"\", \"titulacion\": \"\",\n  \"experiencias\": [{\"empresa\":\"\", \"puesto\":\"\", \"inicio\":\"AAAA-MM\", \"fin\":\"AAAA-MM|actual\", \"funciones\":\"\", \"logros\":\"\"}],\n  \"formacion_reglada\": [{\"titulo\":\"\", \"centro\":\"\", \"anio\":\"\"}],\n  \"formacion_no_reglada\": [{\"titulo\":\"\", \"entidad\":\"\", \"horas\":\"\"}],\n  \"habilidades\": [{\"nombre\":\"\", \"categoria\":\"tecnica|idioma|transversal|herramienta\", \"nivel\":1-5, \"evidencia\":\"\"}],\n  \"idiomas\": [{\"idioma\":\"\", \"nivel_real\":\"\", \"acreditacion\":\"\"}],\n  \"otros\": {\"carnet\":\"\", \"vehiculo\":\"\", \"disponibilidad\":\"\"},\n  \"cv_texto\": \"el CV reescrito en prosa limpia, sin DNI, fecha de nacimiento ni dirección postal\",\n  \"huecos\": [\"pregunta 1\", \"pregunta 2\", \"pregunta 3\"]\n}\nReglas:\n- No inventes nada. Si un dato no está, deja el campo vacío.\n- No incluyas DNI, fecha de nacimiento ni dirección postal en ningún campo. Si vienen en el CV, ignóralos.\n- \\`nivel\\` de una habilidad = nivel real de uso que el texto permite sostener, no el declarado. Si solo se menciona sin contexto, nivel 2 y \\`evidencia\\` vacía.\n- \\`huecos\\`: máximo 3 preguntas, las más valiosas para el encaje, en este orden de prioridad: periodos sin explicar · puestos descritos en menos de dos líneas · idiomas sin nivel concreto · herramientas mencionadas sin contexto de uso · trabajos cortos, de verano, sin contrato o en negocio familiar que el CV pueda haber dejado fuera · logros medibles (cuánta gente, qué volumen, qué mejoró). Una pregunta por hueco, concreta, en tuteo. Si no hay huecos, lista vacía.`;\nreturn [{ json: {\n  cuerpo: {\n    model: MODELO,\n    max_tokens: 8000,   // el modelo piensa antes de responder y eso cuenta dentro del límite (decisión 92)\n    system: SYSTEM,\n    messages: [{ role: 'user', content: 'CV:\\n\\n' + texto.slice(0, 30000) }]\n  }\n} }];\n"
+      },
+      "name": "Code: petición 1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        0
+      ],
+      "id": "95786d90-ddff-4e62-9deb-39b8afd714ad"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "anthropicApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ $json.cuerpo }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "name": "HTTP Request: Claude",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        880,
+        0
+      ],
+      "id": "60abb9eb-6a3b-42e8-a68c-289f3f03a01f"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n · workflow LANOPS-ALTA · nodo \"Code: leer 1\"\n// Modo: Run Once for All Items · JavaScript\n// Lee el JSON de Claude (CV estructurado + huecos). Los huecos ya no se preguntan en una segunda página\n// (los formularios de varias páginas de n8n fallan en este servidor, 10-oct): se enseñan como consejo al final.\nfunction leerJSON(respuesta) {\n  const texto = (respuesta.content || []).filter(b => b.type === 'text').map(b => b.text).join('');\n  const a = texto.indexOf('{'), z = texto.lastIndexOf('}');\n  if (a < 0 || z < a) throw new Error('ALTA: Claude no ha devuelto JSON. Respuesta: ' + texto.slice(0, 300));\n  return JSON.parse(texto.slice(a, z + 1));\n}\nconst cv = leerJSON($input.first().json);\nconst huecos = (Array.isArray(cv.huecos) ? cv.huecos : []).map(String).filter(Boolean).slice(0, 3);\nreturn [{ json: { cv, huecos } }];\n"
+      },
+      "name": "Code: leer 1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        0
+      ],
+      "id": "a2cad444-b9c3-4adf-92c1-542e59d2c6f0"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n · workflow LANOPS-ALTA · nodo \"Code: preparar\"\n// Modo: Run Once for All Items · JavaScript\n// Junta el CV estructurado (\"Code: leer 1\") y el formulario (body de \"Webhook /alta\") en un solo objeto\n// para \"Postgres: guardar\". Los nombres de campo son los atributos name= de lanops/alta/index.html.\nconst f = $('Webhook /alta').first().json.body || {};\nconst cv = $('Code: leer 1').first().json.cv || {};\n\nconst txt = (v, n) => String(v ?? '').trim().slice(0, n);\nconst lista = (v) => String(v ?? '').split(/[,;\\n]/).map(s => s.trim()).filter(Boolean);\nif (String(f.consentimiento || '') !== 'si') throw new Error('ALTA: falta el consentimiento');\nconst email = txt(f.email, 150).toLowerCase();\nif (!/^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$/.test(email)) throw new Error('ALTA: el email no es válido');\nconst institucional = txt(f.institucional, 150).toLowerCase();\nconst dominio = ((institucional || email).split('@')[1] || '').trim();\n\n// Habilidades: categoría válida, nivel 1–5, nombre ≤ 60\nconst CATS = ['tecnica', 'idioma', 'transversal', 'herramienta'];\nconst habilidades = (Array.isArray(cv.habilidades) ? cv.habilidades : [])\n  .map(h => ({\n    nombre: txt(h.nombre, 60),\n    categoria: CATS.includes(h.categoria) ? h.categoria : 'tecnica',\n    nivel: Math.min(5, Math.max(1, parseInt(h.nivel, 10) || 2))\n  }))\n  .filter(h => h.nombre);\n\n// Preferencias (claves de modelo-de-datos.md; valores como los usa el prefiltro de ENCAJE)\nconst pref = [];\nconst add = (tipo, clave, valor, peso = null) => {\n  valor = txt(valor, 60);\n  if (valor && !pref.some(p => p.tipo === tipo && p.clave === clave && p.valor.toLowerCase() === valor.toLowerCase())) {\n    pref.push({ tipo, clave, valor, peso });\n  }\n};\nadd('peso', 'puesto_objetivo', f.puesto, 5);\nfor (const m of lista(f.municipios)) add('duro', 'municipio', m);\nif (['completa', 'parcial', 'indiferente'].includes(f.jornada)) add('duro', 'jornada', f.jornada);\nif (['indefinido', 'temporal', 'practicas'].includes(f.contrato)) add('duro', 'contrato', f.contrato);\nconst salario = parseInt(String(f.salario ?? '').replace(/\\D/g, ''), 10);\nif (salario > 0) add('duro', 'salario_min', String(salario));\nif (/^[ABC][12]$/.test(f.euskera || '')) add('duro', 'euskera', f.euskera);\nfor (const x of lista(f.excluir)) add('exclusion', 'palabra', x);\n\nreturn [{ json: { datos: {\n  nombre: txt(f.nombre, 100) || txt(cv.nombre, 100),\n  email,\n  ciudad: txt(cv.ciudad, 60),\n  titulacion: txt(cv.titulacion, 100),\n  cv_texto: String(cv.cv_texto || '').trim(),\n  dominio,\n  habilidades,\n  preferencias: pref\n} } }];\n"
+      },
+      "name": "Code: preparar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        0
+      ],
+      "id": "9375304d-e290-4150-b09d-1bab86f39147"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH d AS (SELECT $1::jsonb AS j),\nent AS (\n  SELECT e.id FROM lanops.entidades e, d\n  WHERE e.activa AND e.dominio_email IS NOT NULL AND lower(e.dominio_email) = lower(d.j->>'dominio')\n  ORDER BY e.id LIMIT 1\n),\nu AS (\n  INSERT INTO lanops.usuarios (nombre, email, ciudad, titulacion, estado_verificacion, consentimiento_fecha, cv_texto)\n  SELECT j->>'nombre', j->>'email', nullif(j->>'ciudad', ''), nullif(j->>'titulacion', ''),\n         CASE WHEN EXISTS (SELECT 1 FROM ent) THEN 'pendiente' ELSE 'sin_verificar' END,\n         now(), j->>'cv_texto'\n  FROM d\n  ON CONFLICT (email) DO UPDATE SET\n    nombre = EXCLUDED.nombre, ciudad = EXCLUDED.ciudad, titulacion = EXCLUDED.titulacion,\n    consentimiento_fecha = EXCLUDED.consentimiento_fecha, cv_texto = EXCLUDED.cv_texto,\n    estado_verificacion = CASE WHEN lanops.usuarios.estado_verificacion IN ('verificado', 'revocado', 'pendiente')\n                               THEN lanops.usuarios.estado_verificacion ELSE EXCLUDED.estado_verificacion END\n  RETURNING id, (xmax <> 0) AS ya_existia\n),\nhab AS (\n  SELECT DISTINCT ON (lower(x->>'nombre')) x->>'nombre' AS nombre, x->>'categoria' AS categoria, (x->>'nivel')::int AS nivel\n  FROM d, jsonb_array_elements(d.j->'habilidades') x\n  ORDER BY lower(x->>'nombre'), (x->>'nivel')::int DESC\n),\nhab_ins AS (\n  INSERT INTO lanops.habilidades (nombre, categoria)\n  SELECT nombre, categoria FROM hab\n  WHERE NOT EXISTS (SELECT 1 FROM lanops.habilidades h WHERE lower(h.nombre) = lower(hab.nombre))\n  ON CONFLICT (nombre) DO NOTHING\n  RETURNING id, nombre\n),\nhab_id AS (\n  SELECT coalesce(i.id, (SELECT min(h.id) FROM lanops.habilidades h WHERE lower(h.nombre) = lower(hab.nombre))) AS id,\n         hab.nivel\n  FROM hab LEFT JOIN hab_ins i ON lower(i.nombre) = lower(hab.nombre)\n),\nuh_borrar AS (\n  DELETE FROM lanops.usuario_habilidad uh USING u\n  WHERE uh.usuario = u.id AND uh.habilidad NOT IN (SELECT id FROM hab_id WHERE id IS NOT NULL)\n),\nuh AS (\n  INSERT INTO lanops.usuario_habilidad (usuario, habilidad, nivel)\n  SELECT DISTINCT ON (hab_id.id) u.id, hab_id.id, hab_id.nivel FROM u, hab_id WHERE hab_id.id IS NOT NULL\n  ON CONFLICT (usuario, habilidad) DO UPDATE SET nivel = EXCLUDED.nivel\n  RETURNING 1\n),\np AS (\n  SELECT x->>'tipo' AS tipo, x->>'clave' AS clave, x->>'valor' AS valor, nullif(x->>'peso', '')::int AS peso\n  FROM d, jsonb_array_elements(d.j->'preferencias') x\n),\npref_borrar AS (\n  DELETE FROM lanops.preferencias q USING u\n  WHERE q.usuario = u.id AND q.tipo IN ('duro', 'peso')\n    AND NOT EXISTS (SELECT 1 FROM p WHERE p.tipo = q.tipo AND p.clave = q.clave AND p.valor = q.valor)\n),\npref AS (\n  INSERT INTO lanops.preferencias (usuario, tipo, clave, valor, peso, fecha_mod)\n  SELECT u.id, p.tipo, p.clave, p.valor, p.peso, now() FROM u, p\n  ON CONFLICT (usuario, tipo, clave, valor) DO UPDATE SET peso = EXCLUDED.peso, fecha_mod = EXCLUDED.fecha_mod\n  RETURNING 1\n),\nver AS (\n  INSERT INTO lanops.verificaciones (usuario, entidad, tipo, estado)\n  SELECT u.id, ent.id, 'email_institucional', 'pendiente' FROM u, ent\n  WHERE NOT EXISTS (SELECT 1 FROM lanops.verificaciones v WHERE v.usuario = u.id AND v.entidad = ent.id)\n  RETURNING 1\n)\nSELECT u.id AS usuario, u.ya_existia,\n       (SELECT count(*) FROM uh) AS habilidades,\n       (SELECT count(*) FROM pref) AS preferencias,\n       (SELECT count(*) FROM ent) > 0 AS entidad_encontrada\nFROM u;",
+        "options": {
+          "queryReplacement": "={{ [ JSON.stringify($json.datos) ] }}"
+        }
+      },
+      "name": "Postgres: guardar",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1540,
+        0
+      ],
+      "id": "ea0ded19-b604-4053-9299-9ba39170e6cf"
+    },
+    {
+      "parameters": {
+        "jsCode": "// n8n · workflow LANOPS-ALTA · nodo \"Code: enlace\"\n// Modo: Run Once for All Items · JavaScript\n// Enlace firmado a la lista de ENCAJE del usuario recién dado de alta (decisiones 63, 90 y 120 opción a):\n// firma = HMAC-SHA256(ENCAJE_SECRET, 'encaje:' + id), el mismo cálculo que LANOPS-ENCAJE/code-firma.js.\n// El secreto se lee de Railway con $env y no aparece en la salida. Se enseña en la pantalla final del alta.\nconst BASE = 'https://n8n-production-3c20b.up.railway.app/webhook/encaje';\n\nfunction sha256(bytes) {\n  const K = [0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,\n    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,\n    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,\n    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,\n    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,\n    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,\n    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,\n    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];\n  const H = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];\n  const l = bytes.length, n = ((l + 9 + 63) >> 6) << 6, m = new Uint8Array(n);\n  m.set(bytes); m[l] = 0x80;\n  const bits = l * 8;\n  m[n - 4] = (bits >>> 24) & 255; m[n - 3] = (bits >>> 16) & 255; m[n - 2] = (bits >>> 8) & 255; m[n - 1] = bits & 255;\n  m[n - 5] = Math.floor(bits / 2 ** 32) & 255;\n  const w = new Uint32Array(64), r = (x, s) => (x >>> s) | (x << (32 - s));\n  for (let i = 0; i < n; i += 64) {\n    for (let t = 0; t < 16; t++) w[t] = (m[i+4*t] << 24) | (m[i+4*t+1] << 16) | (m[i+4*t+2] << 8) | m[i+4*t+3];\n    for (let t = 16; t < 64; t++) {\n      const s0 = r(w[t-15], 7) ^ r(w[t-15], 18) ^ (w[t-15] >>> 3);\n      const s1 = r(w[t-2], 17) ^ r(w[t-2], 19) ^ (w[t-2] >>> 10);\n      w[t] = (w[t-16] + s0 + w[t-7] + s1) | 0;\n    }\n    let [a, b, c, d, e, f, g, h] = H;\n    for (let t = 0; t < 64; t++) {\n      const t1 = (h + (r(e, 6) ^ r(e, 11) ^ r(e, 25)) + ((e & f) ^ (~e & g)) + K[t] + w[t]) | 0;\n      const t2 = ((r(a, 2) ^ r(a, 13) ^ r(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) | 0;\n      h = g; g = f; f = e; e = (d + t1) | 0; d = c; c = b; b = a; a = (t1 + t2) | 0;\n    }\n    H[0] = (H[0] + a) | 0; H[1] = (H[1] + b) | 0; H[2] = (H[2] + c) | 0; H[3] = (H[3] + d) | 0;\n    H[4] = (H[4] + e) | 0; H[5] = (H[5] + f) | 0; H[6] = (H[6] + g) | 0; H[7] = (H[7] + h) | 0;\n  }\n  const out = new Uint8Array(32);\n  H.forEach((v, i) => { out[4*i] = v >>> 24; out[4*i+1] = (v >>> 16) & 255; out[4*i+2] = (v >>> 8) & 255; out[4*i+3] = v & 255; });\n  return out;\n}\nconst utf8 = (s) => new TextEncoder().encode(s);\nfunction hmacHex(secreto, mensaje) {\n  let k = utf8(secreto);\n  if (k.length > 64) k = sha256(k);\n  const ki = new Uint8Array(64), ko = new Uint8Array(64);\n  for (let i = 0; i < 64; i++) { ki[i] = (k[i] || 0) ^ 0x36; ko[i] = (k[i] || 0) ^ 0x5c; }\n  const m = utf8(mensaje), interior = new Uint8Array(64 + m.length);\n  interior.set(ki); interior.set(m, 64);\n  const ih = sha256(interior), exterior = new Uint8Array(96);\n  exterior.set(ko); exterior.set(ih, 64);\n  return Array.from(sha256(exterior), (x) => x.toString(16).padStart(2, '0')).join('');\n}\n\nconst g = $input.first().json;                       // salida de \"Postgres: guardar\"\nconst usuario = parseInt(g.usuario, 10);\nif (!usuario) throw new Error('ALTA: no se ha guardado el usuario');\nconst secreto = $env.ENCAJE_SECRET;\nif (!secreto) throw new Error('Falta la variable ENCAJE_SECRET en el servicio n8n');\nconst enlace = `${BASE}?u=${usuario}&t=${hmacHex(secreto, 'encaje:' + usuario)}`;\nconst esc = (s) => String(s).replace(/[&<>\"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;' }[c]));\nconst nombre = String($('Code: preparar').first().json.datos.nombre || '').split(' ')[0];\nconst huecos = $('Code: leer 1').first().json.huecos || [];\n\nconst consejos = huecos.length ? `<h2>Para afinar tu encaje</h2>\n<p>Tu CV no responde a estas preguntas. Si las contestas en tu CV y vuelves a hacer el alta con el mismo email, LANOPS te evaluará mejor:</p>\n<ul>${huecos.map(h => `<li>${esc(h)}</li>`).join('')}</ul>` : '';\n\nconst html = `<!doctype html><html lang=\"es\"><head><meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><meta name=\"robots\" content=\"noindex\">\n<title>Tu perfil · LANOPS</title>\n<link rel=\"stylesheet\" href=\"https://lanopsdmm.github.io/lanops/styles.css\"></head><body>\n<header><p class=\"marca\">LANOPS</p></header>\n<main>\n<h1>${g.ya_existia ? 'Perfil actualizado' : 'Ya estás en LANOPS'}${nombre ? ', ' + esc(nombre) : ''}</h1>\n<p>Este es tu enlace personal a las ofertas que encajan contigo. <strong>Guárdalo en favoritos</strong>: no te lo enviamos por correo y es la única forma de volver a tu lista.</p>\n<p><a class=\"boton\" href=\"${esc(enlace)}\">Ver mis ofertas</a></p>\n<p class=\"codigo\">${esc(enlace)}</p>\n<p>La primera vez tarda un par de minutos: LANOPS evalúa para ti las ofertas abiertas. Desde la lista puedes pedir tu certificado.</p>\n${g.entidad_encontrada ? '<p class=\"aviso\">Tu email corresponde a una entidad colaboradora: tu verificación queda pendiente.</p>' : ''}\n${consejos}\n<p>Para cambiar tu perfil, vuelve a hacer el alta con el mismo email.</p>\n</main>\n<footer><p><a href=\"https://lanopsdmm.github.io/lanops/\">LANOPS</a> · La IA evalúa; tú decides.</p></footer>\n</body></html>`;\n\nreturn [{ json: { usuario, enlace, html } }];\n"
+      },
+      "name": "Code: enlace",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1760,
+        0
+      ],
+      "id": "6886a30a-3a74-4df7-9433-8dc651e125d1"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.html }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              }
+            ]
+          }
+        }
+      },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1980,
+        0
+      ],
+      "id": "201f189d-2b26-4afe-98d7-b1304b1bd7b2"
+    }
+  ],
+  "connections": {
+    "Webhook /alta": {
+      "main": [
+        [
+          {
+            "node": "Code: CV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: CV": {
+      "main": [
+        [
+          {
+            "node": "Extract from File: PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File: PDF": {
+      "main": [
+        [
+          {
+            "node": "Code: petición 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: petición 1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request: Claude",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request: Claude": {
+      "main": [
+        [
+          {
+            "node": "Code: leer 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: leer 1": {
+      "main": [
+        [
+          {
+            "node": "Code: preparar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: preparar": {
+      "main": [
+        [
+          {
+            "node": "Postgres: guardar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres: guardar": {
+      "main": [
+        [
+          {
+            "node": "Code: enlace",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: enlace": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crear mi perfil · LANOPS</title>
+<link rel="stylesheet" href="../styles.css">
+<style>
+  /* Solo reglas propias de esta página; el resto viene de ../styles.css */
+  form{display:grid;gap:1.1rem;margin-top:1rem}
+  .campo{display:grid;gap:.3rem}
+  .campo input,.campo select{width:100%}
+  .ayuda{font-size:.9rem;color:var(--texto-2);margin:0}
+  fieldset{border:1px solid var(--borde);border-radius:var(--radio);padding:1rem 1.1rem;margin:0;background:var(--superficie)}
+  legend{font-family:var(--serif);font-size:1.15rem;padding:0 .4rem}
+  fieldset .campo+.campo{margin-top:.9rem}
+  .consent{display:flex;gap:.6rem;align-items:flex-start}
+  .consent input{margin-top:.35rem;width:auto}
+  .consent label{font-weight:normal}
+  .opcional{font-weight:normal;color:var(--texto-2)}
+  #enviando{display:none}
+</style>
+</head>
+<body>
+<header><p class="marca"><a class="marca" href="../">LANOPS</a></p></header>
+
+<main>
+  <h1>Crear mi perfil</h1>
+  <p>Sube tu CV y dinos qué buscas. Al terminar te damos tu enlace personal a las ofertas que encajan contigo.</p>
+
+  <form id="alta" method="post" enctype="multipart/form-data"
+        action="https://n8n-production-3c20b.up.railway.app/webhook/alta">
+
+    <fieldset>
+      <legend>Tú</legend>
+      <div class="campo">
+        <label for="nombre">Nombre y apellidos</label>
+        <input id="nombre" name="nombre" required autocomplete="name" maxlength="100">
+      </div>
+      <div class="campo">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" required autocomplete="email" maxlength="150">
+      </div>
+      <div class="campo">
+        <label for="cv">Tu CV en PDF</label>
+        <input id="cv" name="cv" type="file" accept="application/pdf,.pdf" required aria-describedby="cv-ayuda">
+        <p class="ayuda" id="cv-ayuda">Mejor un PDF exportado desde Word o similar (no un escaneo). No guardamos DNI, fecha de nacimiento ni dirección.</p>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Lo que buscas</legend>
+      <div class="campo">
+        <label for="puesto">¿Qué puesto buscas?</label>
+        <input id="puesto" name="puesto" required maxlength="60" placeholder="p. ej. Ingeniera de procesos, administrativo, cocinero">
+      </div>
+      <div class="campo">
+        <label for="municipios">¿Dónde quieres trabajar? <span class="opcional">(opcional)</span></label>
+        <input id="municipios" name="municipios" aria-describedby="mun-ayuda" placeholder="p. ej. Donostia, Hernani">
+        <p class="ayuda" id="mun-ayuda">Municipios separados por comas. Vacío = toda Gipuzkoa.</p>
+      </div>
+      <div class="campo">
+        <label for="jornada">Jornada</label>
+        <select id="jornada" name="jornada">
+          <option value="indiferente">Indiferente</option>
+          <option value="completa">Completa</option>
+          <option value="parcial">Parcial</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label for="contrato">Tipo de contrato</label>
+        <select id="contrato" name="contrato">
+          <option value="">Indiferente</option>
+          <option value="indefinido">Indefinido</option>
+          <option value="temporal">Temporal</option>
+          <option value="practicas">Prácticas</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label for="salario">Salario mínimo anual en euros <span class="opcional">(opcional)</span></label>
+        <input id="salario" name="salario" type="number" min="0" step="500" inputmode="numeric">
+      </div>
+      <div class="campo">
+        <label for="euskera">Nivel de euskera</label>
+        <select id="euskera" name="euskera">
+          <option value="">No lo hablo / no lo sé</option>
+          <option>A2</option><option>B1</option><option>B2</option><option>C1</option><option>C2</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label for="excluir">Empresas o palabras que NO quieres ver <span class="opcional">(opcional)</span></label>
+        <input id="excluir" name="excluir" aria-describedby="exc-ayuda" placeholder="p. ej. ETT, comercial">
+        <p class="ayuda" id="exc-ayuda">Separadas por comas.</p>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Verificar tu perfil <span class="opcional">(opcional)</span></legend>
+      <div class="campo">
+        <label for="institucional">Email institucional</label>
+        <input id="institucional" name="institucional" type="email" aria-describedby="ins-ayuda" maxlength="150">
+        <p class="ayuda" id="ins-ayuda">Si estudias o has estudiado en una entidad colaboradora (por ejemplo Tecnun), tu perfil queda pendiente de verificar. Sin él también puedes usar LANOPS.</p>
+      </div>
+    </fieldset>
+
+    <div class="consent">
+      <input id="consentimiento" name="consentimiento" type="checkbox" value="si" required>
+      <label for="consentimiento">He leído el aviso y acepto que LANOPS use mi CV y estas respuestas para calcular mi encaje con ofertas y, si lo pido, emitir certificados.</label>
+    </div>
+    <p class="ayuda">LANOPS es un proyecto académico de estudiantes de Tecnun. Tus datos se guardan en servidores de la UE y no se ceden a empresas: solo ven tu certificado si tú se lo envías.</p>
+
+    <p><input type="submit" value="Crear mi perfil"></p>
+    <p id="enviando" class="aviso" role="status">Leyendo tu CV… tarda alrededor de un minuto. No cierres esta página.</p>
+  </form>
+</main>
+
+<footer>
+  <p><a href="../">Volver a LANOPS</a> · Motor basado en <a href="https://github.com/career-ops-hq/career-ops">career-ops</a> (MIT).</p>
+</footer>
+
+<script>
+  // Solo avisa de la espera; el envío es un formulario normal (funciona también sin JavaScript)
+  document.getElementById('alta').addEventListener('submit', function () {
+    document.getElementById('enviando').style.display = 'block';
+    this.querySelector('[type=submit]').disabled = true;
+  });
+</script>
+</body>
+</html>
