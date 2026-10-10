@@ -95,7 +95,12 @@
     </fieldset>
 
     <fieldset>
-      <legend>Verificar tu perfil <span class="opcional">(opcional)</span></legend>
+      <legend>Respaldo de tu perfil <span class="opcional">(opcional)</span></legend>
+      <div class="campo">
+        <label for="recomendacion">Código de recomendación</label>
+        <input id="recomendacion" name="recomendacion" maxlength="40" autocomplete="off" aria-describedby="rec-ayuda" placeholder="p. ej. R123-1A2B3C4D">
+        <p class="ayuda" id="rec-ayuda">Si alguien de LANOPS te ha recomendado, escribe su código. Cada persona puede recomendar a 3.</p>
+      </div>
       <div class="campo">
         <label for="institucional">Email institucional</label>
         <input id="institucional" name="institucional" type="email" aria-describedby="ins-ayuda" maxlength="150">

@@ -63,6 +63,17 @@ const enlace = `${BASE}?u=${usuario}&t=${hmacHex(secreto, 'encaje:' + usuario)}`
 const esc = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const nombre = String($('Code: preparar').first().json.datos.nombre || '').split(' ')[0];
 const huecos = $('Code: leer 1').first().json.huecos || [];
+// [10-oct, LANOPS-INVITAR] código propio para recomendar y resultado del código usado (si lo hubo)
+const miCodigo = 'R' + usuario + '-' + hmacHex(secreto, 'recomienda:' + usuario).slice(0, 8).toUpperCase();
+const quedan = Math.max(0, Number(g.cupo_recomendaciones ?? 3) - Number(g.recomendaciones_usadas ?? 0));
+const codigoDado = $('Code: preparar').first().json.codigo_dado;
+const avisoCodigo = !codigoDado ? '' : g.recomendacion_aceptada
+  ? '<p class="aviso">Has entrado recomendado/a por otra persona de LANOPS: tu perfil lo indica.</p>'
+  : '<p class="aviso">El código de recomendación no es válido o esa persona ya ha usado todas sus recomendaciones. Tu perfil se ha creado igualmente.</p>';
+const recomendar = `<h2>Recomienda a alguien</h2>
+<p>Tu código de recomendación es <strong class="codigo">${miCodigo}</strong>. Quien lo escriba al crear su perfil quedará como recomendado/a por ti.
+${quedan ? `Puedes recomendar a ${quedan} ${quedan === 1 ? 'persona' : 'personas'} más.` : 'Ya has usado todas tus recomendaciones.'}</p>
+<p><a href="https://lanopsdmm.github.io/lanops/alta/">Enlace para crear perfil</a> · <a href="https://lanopsdmm.github.io/lanops/pegar-oferta/?u=${usuario}&amp;t=${enlace.split('t=')[1]}">Pegar una oferta</a></p>`;
 
 const consejos = huecos.length ? `<h2>Para afinar tu encaje</h2>
 <p>Tu CV no responde a estas preguntas. Si las contestas en tu CV y vuelves a hacer el alta con el mismo email, LANOPS te evaluará mejor:</p>
@@ -80,7 +91,9 @@ const html = `<!doctype html><html lang="es"><head><meta charset="utf-8">
 <p class="codigo">${esc(enlace)}</p>
 <p>La primera vez tarda un par de minutos: LANOPS evalúa para ti las ofertas abiertas. Desde la lista puedes pedir tu certificado.</p>
 ${g.entidad_encontrada ? '<p class="aviso">Tu email corresponde a una entidad colaboradora: tu verificación queda pendiente.</p>' : ''}
+${avisoCodigo}
 ${consejos}
+${recomendar}
 <p>Para cambiar tu perfil, vuelve a hacer el alta con el mismo email.</p>
 </main>
 <footer><p><a href="https://lanopsdmm.github.io/lanops/">LANOPS</a> · La IA evalúa; tú decides.</p></footer>

@@ -4,7 +4,7 @@ Alta de usuarios (Pieza 6, dueño Javi). El botón "Crear mi perfil" de la landi
 `https://lanopsdmm.github.io/lanops/alta/` (`lanops/alta/index.html`). Esa página envía el formulario
 (multipart, con el PDF) a `https://n8n-production-3c20b.up.railway.app/webhook/alta`.
 
-Estado: **[10-oct-2026] `construido`**. El código está probado fuera de n8n: el SQL contra el esquema real en un Postgres 16 local, y la firma del enlace contra `node:crypto`. No está probado en n8n.
+Estado: **[10-oct-2026] `probado en real`** (Javi). Alta de la persona demo Ane Etxeberria (ficticia, `ane.etxeberria@ejemplo.lanops.eus`, CV en PDF) desde `alta/index.html` con el email institucional `@alumni.tecnun.es`: usuario 202 creado, verificación de Tecnun en `pendiente`, 3 consejos sobre huecos del CV, y el enlace "Ver mis ofertas" abre su lista de ENCAJE (20 vacantes evaluadas). SQL probado también contra el esquema en un Postgres 16 local (alta y re-alta con el mismo email).
 
 **Por qué Webhook y no Form Trigger [10-oct]:** la primera versión usaba un Form Trigger y una segunda página con las
 preguntas (n8n Form). Con ella, Claude respondía y la ejecución quedaba esperando en "Form: preguntas", pero el
@@ -36,9 +36,17 @@ Las preguntas sobre el CV ("huecos") se enseñan al final como consejo, en vez d
   - un estado `pendiente`, `verificado` o `revocado` no baja.
   - Riesgo: quien conozca tu email puede cambiar tu perfil (no se confirma el email).
 
+## Recomendaciones (LANOPS-INVITAR) [10-oct]
+
+No hay un workflow aparte: va dentro del alta.
+- **El código de cada usuario** es `R<id>-<8 hex>`, donde los 8 hex son los primeros de HMAC(`ENCAJE_SECRET`, `'recomienda:' + id`) en mayúsculas. **No se guarda en ninguna tabla**: `Code: preparar` lo comprueba recalculando la firma, así que no cambia la estructura congelada.
+- **Dónde se ve el código:** en la página final del alta ("Recomienda a alguien"), con cuántas recomendaciones le quedan. También aparecen los enlaces a crear perfil y a pegar una oferta.
+- **Cuándo cuenta la recomendación:** `Postgres: guardar` pone `usuarios.recomendado_por` solo si el que recomienda existe, no es la misma persona (otro email) y no ha llegado a `CONFIGURACION.cupo_recomendaciones` (3). Un `recomendado_por` ya guardado no cambia.
+- **Si el código no vale** o se ha agotado el cupo, el alta se hace igual y se avisa al usuario.
+- Probado en Node (código válido, código falso, sin código) y en un Postgres 16 local: 3 recomendaciones aceptadas, la 4.ª rechazada y la auto-recomendación rechazada.
+
 ## Pendiente
 
-- El código de recomendación (`recomendado_por`) no se pide todavía: no existen los códigos, porque `LANOPS-INVITAR` no está hecho.
 - El texto RGPD de `alta/index.html` es un aviso breve. El texto completo es el ítem 9.
 - Si algo falla, n8n responde con su error genérico (no hay página de error propia).
 - Preguntas sobre el CV en una segunda página (decisión 121): pendiente; ahora se enseñan como consejo.

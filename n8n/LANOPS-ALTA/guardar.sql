@@ -4,6 +4,9 @@
 -- Si el email ya existe, ACTUALIZA el perfil (así se edita el perfil volviendo a hacer el alta, decisión 116):
 --   reemplaza CV, habilidades y preferencias 'duro'/'peso'; las exclusiones se SUMAN (no se borran las que
 --   haya aprendido FEEDBACK); no baja un estado 'pendiente', 'verificado' o 'revocado'.
+-- Recomendación [10-oct, LANOPS-INVITAR]: si llega recomendado_por (código ya comprobado en "Code: preparar"), se guarda
+--   solo si ese usuario existe, no es la misma persona (otro email) y no ha agotado CONFIGURACION.cupo_recomendaciones.
+--   Un recomendado_por ya guardado no se cambia.
 -- Verificación: si el dominio del email institucional (o del email) es el de una ENTIDAD activa,
 --   VERIFICACIONES 'email_institucional' en 'pendiente' y el usuario en 'pendiente' (no hay correo para confirmar).
 WITH d AS (SELECT $1::jsonb AS j),
@@ -12,13 +15,23 @@ ent AS (
   WHERE e.activa AND e.dominio_email IS NOT NULL AND lower(e.dominio_email) = lower(d.j->>'dominio')
   ORDER BY e.id LIMIT 1
 ),
+cupo AS (
+  SELECT coalesce((SELECT valor::int FROM lanops.configuracion WHERE clave = 'cupo_recomendaciones'), 3) AS n
+),
+rec AS (
+  SELECT r.id FROM lanops.usuarios r, d, cupo
+  WHERE r.id = nullif(d.j->>'recomendado_por', '')::int
+    AND lower(r.email) <> lower(d.j->>'email')
+    AND (SELECT count(*) FROM lanops.usuarios x WHERE x.recomendado_por = r.id AND lower(x.email) <> lower(d.j->>'email')) < cupo.n
+),
 u AS (
-  INSERT INTO lanops.usuarios (nombre, email, ciudad, titulacion, estado_verificacion, consentimiento_fecha, cv_texto)
+  INSERT INTO lanops.usuarios (nombre, email, ciudad, titulacion, estado_verificacion, consentimiento_fecha, cv_texto, recomendado_por)
   SELECT j->>'nombre', j->>'email', nullif(j->>'ciudad', ''), nullif(j->>'titulacion', ''),
          CASE WHEN EXISTS (SELECT 1 FROM ent) THEN 'pendiente' ELSE 'sin_verificar' END,
-         now(), j->>'cv_texto'
+         now(), j->>'cv_texto', (SELECT id FROM rec)
   FROM d
   ON CONFLICT (email) DO UPDATE SET
+    recomendado_por = coalesce(lanops.usuarios.recomendado_por, EXCLUDED.recomendado_por),
     nombre = EXCLUDED.nombre, ciudad = EXCLUDED.ciudad, titulacion = EXCLUDED.titulacion,
     consentimiento_fecha = EXCLUDED.consentimiento_fecha, cv_texto = EXCLUDED.cv_texto,
     estado_verificacion = CASE WHEN lanops.usuarios.estado_verificacion IN ('verificado', 'revocado', 'pendiente')
@@ -76,5 +89,8 @@ ver AS (
 SELECT u.id AS usuario, u.ya_existia,
        (SELECT count(*) FROM uh) AS habilidades,
        (SELECT count(*) FROM pref) AS preferencias,
-       (SELECT count(*) FROM ent) > 0 AS entidad_encontrada
+       (SELECT count(*) FROM ent) > 0 AS entidad_encontrada,
+       EXISTS (SELECT 1 FROM rec) AS recomendacion_aceptada,
+       (SELECT count(*) FROM lanops.usuarios x WHERE x.recomendado_por = u.id) AS recomendaciones_usadas,
+       (SELECT n FROM cupo) AS cupo_recomendaciones
 FROM u;
