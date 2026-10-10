@@ -10,10 +10,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.2,
       "position": [
-        0,
-        0
+        -1472,
+        192
       ],
-      "id": "3cb5150f-7e17-40a6-b9d4-266a4fc54715",
+      "id": "732d8ce6-b784-49f3-aea8-c4b7f4bc9b80",
       "name": "Webhook /descartar",
       "webhookId": "131a4fb3-ade2-45cd-a307-65a546708258"
     },
@@ -24,10 +24,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        208,
-        0
+        -1264,
+        192
       ],
-      "id": "33ca6551-2463-4f78-b285-73072885a20d",
+      "id": "c54e307e-d027-4819-82db-a5e9903c8844",
       "name": "Code: firma"
     },
     {
@@ -37,10 +37,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        400,
-        0
+        -1072,
+        192
       ],
-      "id": "d5f04f42-985d-4db3-ba7f-286de0f29cb0",
+      "id": "78148843-1ea3-4906-9150-90fc531795db",
       "name": "Code: entrada"
     },
     {
@@ -71,10 +71,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        576,
-        0
+        -896,
+        192
       ],
-      "id": "e6863eaa-6e40-4e50-82a4-55041573f589",
+      "id": "524264f1-f319-4ef4-bc37-f2e388f1f20e",
       "name": "IF firma válida"
     },
     {
@@ -88,10 +88,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        800,
-        96
+        -672,
+        288
       ],
-      "id": "0290c523-277f-4bd7-b667-76478e55b324",
+      "id": "3f52c40c-c2a8-43f8-ab8f-4904db7fe5c7",
       "name": "Respond 403"
     },
     {
@@ -105,10 +105,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.7,
       "position": [
-        800,
-        -96
+        -672,
+        96
       ],
-      "id": "9443e71f-3656-407f-a3ce-86d922022ba6",
+      "id": "ef222811-39de-41c4-82b6-e2ca2473f348",
       "name": "Postgres: aplicar",
       "executeOnce": true,
       "alwaysOutputData": true,
@@ -126,10 +126,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1024,
-        -96
+        -448,
+        96
       ],
-      "id": "c28c2d09-2b41-40fb-8914-d415c176971e",
+      "id": "a57321a4-ddf8-4050-bc9a-7d69296ced64",
       "name": "Code: preparar IA"
     },
     {
@@ -160,10 +160,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1248,
-        -96
+        -224,
+        96
       ],
-      "id": "912042c9-8484-4deb-8249-a69bcbfee71f",
+      "id": "ebf7b021-3baf-410e-bfaa-c753b4784500",
       "name": "IF ¿preguntar a la IA?"
     },
     {
@@ -191,10 +191,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        1472,
-        -192
+        0,
+        0
       ],
-      "id": "0be09e47-884e-4507-a796-bb6f81b173d5",
+      "id": "fff413b6-01d2-4149-9d7e-633aed3ff7c3",
       "name": "HTTP Request: Claude",
       "credentials": {
         "anthropicApi": {
@@ -211,10 +211,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1696,
-        -192
+        224,
+        0
       ],
-      "id": "f96c5d7f-3899-45a5-8157-5b1e58e9f4bc",
+      "id": "7be8cd85-f537-4339-b877-5060174e0432",
       "name": "Code: leer regla"
     },
     {
@@ -228,10 +228,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.7,
       "position": [
-        1920,
-        -96
+        448,
+        96
       ],
-      "id": "b7528202-7e97-4387-8eef-c7120f16f7bc",
+      "id": "a29ee75d-d1fd-4814-87a3-33d0224a3a5f",
       "name": "Postgres: aprender",
       "executeOnce": true,
       "alwaysOutputData": true,
@@ -253,10 +253,10 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.7,
       "position": [
-        2144,
-        -96
+        672,
+        96
       ],
-      "id": "5265764a-59f6-48b6-84a5-d9271d0ee77a",
+      "id": "1e2dfe50-b366-45ea-b4ea-9cdc73705b1b",
       "name": "Postgres: aprendido",
       "executeOnce": true,
       "alwaysOutputData": true,
@@ -269,15 +269,15 @@
     },
     {
       "parameters": {
-        "jsCode": "// n8n · workflow LANOPS-FEEDBACK · nodo \"Code: HTML\"  (detrás de \"Postgres: aprendido\")\n// Modo: Run Once for All Items · JavaScript\n// Página \"Lo que LANOPS ha aprendido de ti\": mensaje de la acción + reglas aprendidas (quitar) + descartes (recuperar)\n// + perfil de búsqueda del alta (solo consulta: se cambia en el alta, Pieza 6).\n// Usa $('Code: entrada'), $('Postgres: aplicar'), $('Postgres: aprender') y, si corrió, $('Code: leer regla'):\n// **los nombres de esos nodos deben ser exactos**. Accesible (decisión 21): HTML semántico, formularios con\n// etiqueta, mensaje en role=\"status\", nada depende solo del color. Sin JavaScript en la página.\nconst CAMBIAR_PERFIL = 'Para cambiar algo de aquí, hazlo desde tu alta en LANOPS.';   // [08-oct] depende del alta (Pieza 6)\n\nconst e = $('Code: entrada').first().json;\nconst a = $('Postgres: aplicar').first().json || {};\nconst ap = $('Postgres: aprender').first().json || {};\nlet ia = null;\ntry { ia = $('Code: leer regla').first().json; } catch (_) { ia = null; }   // no corrió: no se preguntó a la IA\nconst st = $input.first().json || {};\nconst json = (x) => (typeof x === 'string' ? JSON.parse(x) : (x || []));\nconst aprendidas = json(st.aprendidas), enCamino = json(st.en_camino), descartes = json(st.descartes), perfil = json(st.perfil);\nconst nuevas = json(ap.aprendidas), retiradas = json(ap.retiradas);\nconst umbral = Number(st.umbral) || 2;\n\nconst esc = (s) => String(s ?? '').replace(/[&<>\"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' }[c]));\nconst norm = (s) => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();\nconst fecha = (f) => (f ? f.split('-').reverse().join('/') : '');\nconst MOTIVO = { tarea: 'lo que se hace en el puesto', sector: 'el sector', empresa: 'la empresa',\n                 salario: 'el salario', lejos: 'está lejos', otro: 'otro motivo' };\nconst CONTRATO = { temporal: 'temporal', practicas: 'de prácticas', otro: 'de otro tipo', indefinido: 'indefinido' };\nconst ES_IA = (c) => ['palabra', 'municipio', 'contrato'].includes(c);\n// \"ofertas …\" según el tipo de regla\nconst OFERTAS = (c, v) => ({\n  empresa: `ofertas de la empresa <strong>${esc(v)}</strong>`,\n  sector: `ofertas del sector <strong>${esc(v)}</strong>`,\n  palabra: `ofertas que mencionan <strong>«${esc(v)}»</strong>`,\n  municipio: `ofertas en <strong>${esc(v)}</strong>`,\n  contrato: `ofertas con contrato <strong>${esc(CONTRATO[v] || v)}</strong>`,\n}[c] || `ofertas con ${esc(c)} = ${esc(v)}`);\nconst CLAVE = { municipio: 'Municipio', radio_km: 'Distancia máxima (km)', jornada: 'Jornada', contrato: 'Contrato',\n  salario_min: 'Salario mínimo', modalidad: 'Modalidad', fecha_inicio_max: 'Incorporación antes de', permiso_trabajo: 'Permiso de trabajo',\n  euskera: 'Euskera', sector: 'Sector', tamano: 'Tamaño de empresa', idioma: 'Idioma', estabilidad: 'Estabilidad', ett: 'ETT',\n  palabra: 'Palabra', empresa: 'Empresa', movilidad: 'Movilidad', turnos: 'Turnos', puesto_objetivo: 'Puesto que buscas',\n  situacion_actual: 'Situación actual' };\nconst TIPO = (p) => (p.tipo === 'duro' ? 'No negociable' : p.tipo === 'peso' ? `Importante (${p.peso}/5)` : 'Excluyes');\n\n// Formularios: GET al mismo webhook (relativo: vale en la Test URL y en la Production URL)\nconst ocultos = `<input type=\"hidden\" name=\"u\" value=\"${esc(e.usuario)}\"><input type=\"hidden\" name=\"t\" value=\"${esc(e.t)}\">`;\nconst formRecuperar = (r) => `<form method=\"get\" action=\"descartar\">${ocultos}\n  <input type=\"hidden\" name=\"a\" value=\"recuperar\"><input type=\"hidden\" name=\"v\" value=\"${esc(r.vacante)}\">\n  <button type=\"submit\">Recuperar esta oferta</button></form>`;\nconst formQuitar = (x) => `<form method=\"get\" action=\"descartar\">${ocultos}\n  <input type=\"hidden\" name=\"a\" value=\"olvidar\"><input type=\"hidden\" name=\"k\" value=\"${esc(x.clave)}\">\n  <input type=\"hidden\" name=\"val\" value=\"${esc(x.valor)}\">\n  <button type=\"submit\">Quitar esta regla</button></form>`;\n\n// 1. Qué ha pasado\nconst msg = [];\nif (e.accion === 'descartar') {\n  if (!a.hecho) msg.push('Esa oferta no existe.');\n  else {\n    msg.push(a.motivo\n      ? `Has descartado «${esc(a.puesto)}» (${esc(a.empresa)}) por ${esc(MOTIVO[a.motivo])}. No volverá a salir en tu lista.`\n      : `Has quitado «${esc(a.puesto)}» (${esc(a.empresa)}) de tu lista. Sin motivo, no aprendemos nada de este descarte.`);\n    for (const x of nuevas) {\n      if (x.ia) msg.push(`<strong>La IA ha aprendido:</strong> desde ahora no te enseñaremos ${OFERTAS(x.clave, x.valor)}.`\n        + (ia && ia.porque ? ` <em>${esc(ia.porque)}</em>` : ''));\n      else if (x.clave === 'empresa') msg.push(`<strong>Hemos aprendido:</strong> desde ahora no te enseñaremos ${OFERTAS('empresa', x.valor)}.`);\n      else msg.push(`<strong>Hemos aprendido:</strong> llevas ${umbral} o más ofertas descartadas por el sector ${esc(x.valor)}; desde ahora no te enseñaremos ${OFERTAS('sector', x.valor)}.`);\n    }\n    if (ia && !ia.regla && ia.porque && !nuevas.some(x => x.ia))\n      msg.push(`La IA ha leído la oferta y no ve una regla clara que aprender: <em>${esc(ia.porque)}</em>`);\n    if (a.nuevo && a.motivo === 'empresa' && a.fuente === 'lanbide')\n      msg.push('Lanbide no publica el nombre de la empresa, así que no podemos dejar de enseñártela.');\n    const c = enCamino.find(s => a.sector_tocado && norm(s.valor) === norm(a.sector_tocado));\n    if (a.motivo === 'sector' && c)\n      msg.push(`Si descartas ${c.faltan === 1 ? 'una oferta más' : c.faltan + ' ofertas más'} del sector ${esc(c.valor)} por el sector, dejaremos de enseñarte ese sector.`);\n  }\n} else if (e.accion === 'falta_porque') {\n  msg.push(`No hemos descartado «${esc(a.puesto || 'la oferta')}»: si eliges «otro motivo», cuéntanos por qué. Vuelve a tu lista y escríbelo, o elige «solo quitarla».`);\n} else if (e.accion === 'recuperar') {\n  if (!a.hecho) msg.push('Esa oferta no estaba entre tus descartes.');\n  else {\n    msg.push(st.tocada_oculta\n      ? `«${esc(a.puesto)}» ya no está entre tus descartes, pero no la verás en tu lista mientras tengas una regla que la esconda (más abajo puedes quitarla).`\n      : `«${esc(a.puesto)}» vuelve a tu lista.`);\n    for (const x of retiradas) msg.push(`Hemos quitado la regla que escondía ${OFERTAS(x.clave, x.valor)}: no quedan descartes que la justifiquen.`);\n  }\n} else if (e.accion === 'olvidar') {\n  msg.push(a.hecho\n    ? `Hemos quitado la regla: vuelves a ver ${OFERTAS(a.clave, a.valor)}. Las ofertas que descartaste siguen descartadas; si quieres verlas, recupéralas abajo.`\n    : 'No había ninguna regla aprendida con ese nombre.');\n}\n\n// 2. Secciones\nconst liAprendida = (x) => `<li>No te enseñamos ${OFERTAS(x.clave, x.valor)}${ES_IA(x.clave) ? ' <span class=\"etq\">propuesta por la IA</span>' : ''}.\n  <span class=\"meta\">Aprendido de ${x.descartes === 1 ? '1 descarte' : x.descartes + ' descartes'} el ${fecha(x.desde)} ·\n  ahora esconde ${x.ocultas === 1 ? '1 oferta abierta' : x.ocultas + ' ofertas abiertas'}.</span>\n  ${formQuitar(x)}</li>`;\nconst liCamino = (s) => `<li>Sector ${esc(s.valor)}: ${s.descartes} de ${umbral} descartes por el sector.</li>`;\nconst liDescarte = (r) => `<li class=\"vac\"><h3>${esc(r.puesto)}</h3>\n  <p class=\"meta\">${esc(r.empresa)}${r.sector ? ' · sector ' + esc(r.sector) : ''} · descartada el ${fecha(r.fecha)} ${r.motivo ? 'por ' + esc(MOTIVO[r.motivo] || r.motivo) : 'sin motivo'}</p>\n  ${r.oculta ? '<p class=\"meta\">Aunque la recuperes, no la verás mientras tengas una regla que la esconda.</p>' : ''}\n  ${formRecuperar(r)}</li>`;\nconst liPerfil = (p) => `<li>${TIPO(p)} · ${esc(CLAVE[p.clave] || p.clave)}: <strong>${esc(String(p.valor).replace(/_/g, ' '))}</strong></li>`;\nconst volver = `<p><a href=\"encaje?u=${encodeURIComponent(e.usuario)}&amp;t=${encodeURIComponent(e.t)}\">Volver a tu lista de vacantes</a></p>`;\n\nconst html = `<!doctype html>\n<html lang=\"es\"><head><meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<meta name=\"robots\" content=\"noindex\">\n<title>Lo que LANOPS ha aprendido de ti</title>\n<style>\n body{font-family:system-ui,-apple-system,\"Segoe UI\",sans-serif;max-width:46rem;margin:0 auto;padding:1rem;line-height:1.5;color:#1a1a1a;background:#fff}\n h1{font-size:1.6rem} h2{font-size:1.25rem;margin-top:2rem} h3{font-size:1.05rem;margin:.2rem 0}\n ul{padding-left:1.2rem} .vacs{list-style:none;padding:0} .vac{border:1px solid #888;border-radius:.5rem;padding:.8rem 1rem;margin:0 0 .8rem}\n .meta{color:#444;margin:.2rem 0} form{margin:.4rem 0 .8rem}\n .etq{font-size:.85rem;border:1px solid #555;border-radius:.3rem;padding:0 .3rem;color:#333}\n .aviso{border-left:4px solid #0b4fa8;background:#eef4fc;padding:.6rem 1rem;margin:1rem 0}\n a{color:#0b4fa8} a:focus,button:focus{outline:3px solid #0b4fa8;outline-offset:2px}\n button{font:inherit;padding:.3rem .8rem;border:2px solid #0b4fa8;border-radius:.4rem;background:#fff;color:#0b4fa8;cursor:pointer}\n footer{font-size:.85rem;color:#444;border-top:1px solid #ccc;margin-top:2rem;padding-top:.5rem}\n</style></head><body>\n<header><h1>Lo que LANOPS ha aprendido de ti</h1>${volver}</header>\n<main>\n${msg.length ? `<div class=\"aviso\" role=\"status\">${msg.map(m => `<p>${m}</p>`).join('')}</div>` : ''}\n<p>Cuando descartas una oferta y nos dices por qué, LANOPS aprende para no enseñarte ofertas parecidas:\nsi es por <em>la empresa</em>, dejamos de enseñarte esa empresa; si descartas ${umbral} ofertas del mismo sector por\n<em>el sector</em>, ese sector; con los demás motivos, la IA lee la oferta y puede proponer una regla (una palabra\ndel puesto, un municipio o un tipo de contrato). Todo lo aprendido está aquí y puedes quitarlo.</p>\n\n<h2>Lo que hemos aprendido</h2>\n${aprendidas.length ? `<ul>${aprendidas.map(liAprendida).join('')}</ul>` : '<p>Todavía nada.</p>'}\n${enCamino.length ? `<h2>A punto de aprender</h2><ul>${enCamino.map(liCamino).join('')}</ul>` : ''}\n\n<h2>Ofertas que has descartado</h2>\n${descartes.length ? `<ul class=\"vacs\">${descartes.map(liDescarte).join('')}</ul>` : '<p>No has descartado ninguna oferta.</p>'}\n\n<h2>Tu perfil de búsqueda</h2>\n<p>Lo que nos dijiste al darte de alta. ${esc(CAMBIAR_PERFIL)}</p>\n${perfil.length ? `<ul>${perfil.map(liPerfil).join('')}</ul>` : '<p>No has indicado preferencias.</p>'}\n</main>\n<footer><p>La IA evalúa cada oferta con la rúbrica abierta de career-ops y propone reglas; tú decides y puedes quitarlas.</p></footer>\n</body></html>`;\nreturn [{ json: { html, status: 200 } }];\n"
+        "jsCode": "// n8n · workflow LANOPS-FEEDBACK · nodo \"Code: HTML\"  (detrás de \"Postgres: aprendido\")\n// Modo: Run Once for All Items · JavaScript\n// [10-oct] Estilo común \"Cálido\" (decisiones 122–123): enlaza https://lanopsdmm.github.io/lanops/styles.css; sin <style> propio.\n// Página \"Lo que LANOPS ha aprendido de ti\": mensaje de la acción + reglas aprendidas (quitar) + descartes (recuperar)\n// + perfil de búsqueda del alta (solo consulta: se cambia en el alta, Pieza 6).\n// Usa $('Code: entrada'), $('Postgres: aplicar'), $('Postgres: aprender') y, si corrió, $('Code: leer regla'):\n// **los nombres de esos nodos deben ser exactos**. Accesible (decisión 21): HTML semántico, formularios con\n// etiqueta, mensaje en role=\"status\", nada depende solo del color. Sin JavaScript en la página.\nconst CAMBIAR_PERFIL = 'Para cambiar algo de aquí, hazlo desde tu alta en LANOPS.';   // [08-oct] depende del alta (Pieza 6)\n\nconst e = $('Code: entrada').first().json;\nconst a = $('Postgres: aplicar').first().json || {};\nconst ap = $('Postgres: aprender').first().json || {};\nlet ia = null;\ntry { ia = $('Code: leer regla').first().json; } catch (_) { ia = null; }   // no corrió: no se preguntó a la IA\nconst st = $input.first().json || {};\nconst json = (x) => (typeof x === 'string' ? JSON.parse(x) : (x || []));\nconst aprendidas = json(st.aprendidas), enCamino = json(st.en_camino), descartes = json(st.descartes), perfil = json(st.perfil);\nconst nuevas = json(ap.aprendidas), retiradas = json(ap.retiradas);\nconst umbral = Number(st.umbral) || 2;\n\nconst esc = (s) => String(s ?? '').replace(/[&<>\"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' }[c]));\nconst norm = (s) => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();\nconst fecha = (f) => (f ? f.split('-').reverse().join('/') : '');\nconst MOTIVO = { tarea: 'lo que se hace en el puesto', sector: 'el sector', empresa: 'la empresa',\n                 salario: 'el salario', lejos: 'está lejos', otro: 'otro motivo' };\nconst CONTRATO = { temporal: 'temporal', practicas: 'de prácticas', otro: 'de otro tipo', indefinido: 'indefinido' };\nconst ES_IA = (c) => ['palabra', 'municipio', 'contrato'].includes(c);\n// \"ofertas …\" según el tipo de regla\nconst OFERTAS = (c, v) => ({\n  empresa: `ofertas de la empresa <strong>${esc(v)}</strong>`,\n  sector: `ofertas del sector <strong>${esc(v)}</strong>`,\n  palabra: `ofertas que mencionan <strong>«${esc(v)}»</strong>`,\n  municipio: `ofertas en <strong>${esc(v)}</strong>`,\n  contrato: `ofertas con contrato <strong>${esc(CONTRATO[v] || v)}</strong>`,\n}[c] || `ofertas con ${esc(c)} = ${esc(v)}`);\nconst CLAVE = { municipio: 'Municipio', radio_km: 'Distancia máxima (km)', jornada: 'Jornada', contrato: 'Contrato',\n  salario_min: 'Salario mínimo', modalidad: 'Modalidad', fecha_inicio_max: 'Incorporación antes de', permiso_trabajo: 'Permiso de trabajo',\n  euskera: 'Euskera', sector: 'Sector', tamano: 'Tamaño de empresa', idioma: 'Idioma', estabilidad: 'Estabilidad', ett: 'ETT',\n  palabra: 'Palabra', empresa: 'Empresa', movilidad: 'Movilidad', turnos: 'Turnos', puesto_objetivo: 'Puesto que buscas',\n  situacion_actual: 'Situación actual' };\nconst TIPO = (p) => (p.tipo === 'duro' ? 'No negociable' : p.tipo === 'peso' ? `Importante (${p.peso}/5)` : 'Excluyes');\n\n// Formularios: GET al mismo webhook (relativo: vale en la Test URL y en la Production URL)\nconst ocultos = `<input type=\"hidden\" name=\"u\" value=\"${esc(e.usuario)}\"><input type=\"hidden\" name=\"t\" value=\"${esc(e.t)}\">`;\nconst formRecuperar = (r) => `<form method=\"get\" action=\"descartar\">${ocultos}\n  <input type=\"hidden\" name=\"a\" value=\"recuperar\"><input type=\"hidden\" name=\"v\" value=\"${esc(r.vacante)}\">\n  <button type=\"submit\">Recuperar esta oferta</button></form>`;\nconst formQuitar = (x) => `<form method=\"get\" action=\"descartar\">${ocultos}\n  <input type=\"hidden\" name=\"a\" value=\"olvidar\"><input type=\"hidden\" name=\"k\" value=\"${esc(x.clave)}\">\n  <input type=\"hidden\" name=\"val\" value=\"${esc(x.valor)}\">\n  <button type=\"submit\">Quitar esta regla</button></form>`;\n\n// 1. Qué ha pasado\nconst msg = [];\nif (e.accion === 'descartar') {\n  if (!a.hecho) msg.push('Esa oferta no existe.');\n  else {\n    msg.push(a.motivo\n      ? `Has descartado «${esc(a.puesto)}» (${esc(a.empresa)}) por ${esc(MOTIVO[a.motivo])}. No volverá a salir en tu lista.`\n      : `Has quitado «${esc(a.puesto)}» (${esc(a.empresa)}) de tu lista. Sin motivo, no aprendemos nada de este descarte.`);\n    for (const x of nuevas) {\n      if (x.ia) msg.push(`<strong>La IA ha aprendido:</strong> desde ahora no te enseñaremos ${OFERTAS(x.clave, x.valor)}.`\n        + (ia && ia.porque ? ` <em>${esc(ia.porque)}</em>` : ''));\n      else if (x.clave === 'empresa') msg.push(`<strong>Hemos aprendido:</strong> desde ahora no te enseñaremos ${OFERTAS('empresa', x.valor)}.`);\n      else msg.push(`<strong>Hemos aprendido:</strong> llevas ${umbral} o más ofertas descartadas por el sector ${esc(x.valor)}; desde ahora no te enseñaremos ${OFERTAS('sector', x.valor)}.`);\n    }\n    if (ia && !ia.regla && ia.porque && !nuevas.some(x => x.ia))\n      msg.push(`La IA ha leído la oferta y no ve una regla clara que aprender: <em>${esc(ia.porque)}</em>`);\n    if (a.nuevo && a.motivo === 'empresa' && a.fuente === 'lanbide')\n      msg.push('Lanbide no publica el nombre de la empresa, así que no podemos dejar de enseñártela.');\n    const c = enCamino.find(s => a.sector_tocado && norm(s.valor) === norm(a.sector_tocado));\n    if (a.motivo === 'sector' && c)\n      msg.push(`Si descartas ${c.faltan === 1 ? 'una oferta más' : c.faltan + ' ofertas más'} del sector ${esc(c.valor)} por el sector, dejaremos de enseñarte ese sector.`);\n  }\n} else if (e.accion === 'falta_porque') {\n  msg.push(`No hemos descartado «${esc(a.puesto || 'la oferta')}»: si eliges «otro motivo», cuéntanos por qué. Vuelve a tu lista y escríbelo, o elige «solo quitarla».`);\n} else if (e.accion === 'recuperar') {\n  if (!a.hecho) msg.push('Esa oferta no estaba entre tus descartes.');\n  else {\n    msg.push(st.tocada_oculta\n      ? `«${esc(a.puesto)}» ya no está entre tus descartes, pero no la verás en tu lista mientras tengas una regla que la esconda (más abajo puedes quitarla).`\n      : `«${esc(a.puesto)}» vuelve a tu lista.`);\n    for (const x of retiradas) msg.push(`Hemos quitado la regla que escondía ${OFERTAS(x.clave, x.valor)}: no quedan descartes que la justifiquen.`);\n  }\n} else if (e.accion === 'olvidar') {\n  msg.push(a.hecho\n    ? `Hemos quitado la regla: vuelves a ver ${OFERTAS(a.clave, a.valor)}. Las ofertas que descartaste siguen descartadas; si quieres verlas, recupéralas abajo.`\n    : 'No había ninguna regla aprendida con ese nombre.');\n}\n\n// 2. Secciones\nconst liAprendida = (x) => `<li>No te enseñamos ${OFERTAS(x.clave, x.valor)}${ES_IA(x.clave) ? ' <span class=\"etq\">propuesta por la IA</span>' : ''}.\n  <span class=\"meta\">Aprendido de ${x.descartes === 1 ? '1 descarte' : x.descartes + ' descartes'} el ${fecha(x.desde)} ·\n  ahora esconde ${x.ocultas === 1 ? '1 oferta abierta' : x.ocultas + ' ofertas abiertas'}.</span>\n  ${formQuitar(x)}</li>`;\nconst liCamino = (s) => `<li>Sector ${esc(s.valor)}: ${s.descartes} de ${umbral} descartes por el sector.</li>`;\nconst liDescarte = (r) => `<li class=\"vac\"><h3>${esc(r.puesto)}</h3>\n  <p class=\"meta\">${esc(r.empresa)}${r.sector ? ' · sector ' + esc(r.sector) : ''} · descartada el ${fecha(r.fecha)} ${r.motivo ? 'por ' + esc(MOTIVO[r.motivo] || r.motivo) : 'sin motivo'}</p>\n  ${r.oculta ? '<p class=\"meta\">Aunque la recuperes, no la verás mientras tengas una regla que la esconda.</p>' : ''}\n  ${formRecuperar(r)}</li>`;\nconst liPerfil = (p) => `<li>${TIPO(p)} · ${esc(CLAVE[p.clave] || p.clave)}: <strong>${esc(String(p.valor).replace(/_/g, ' '))}</strong></li>`;\nconst volver = `<p><a href=\"encaje?u=${encodeURIComponent(e.usuario)}&amp;t=${encodeURIComponent(e.t)}\">Volver a tu lista de vacantes</a></p>`;\n\nconst html = `<!doctype html>\n<html lang=\"es\"><head><meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<meta name=\"robots\" content=\"noindex\">\n<title>Lo que LANOPS ha aprendido de ti</title>\n<link rel=\"stylesheet\" href=\"https://lanopsdmm.github.io/lanops/styles.css\">\n</head><body>\n<header><p class=\"marca\">LANOPS</p></header>\n<main>\n<h1>Lo que LANOPS ha aprendido de ti</h1>${volver}\n${msg.length ? `<div class=\"aviso\" role=\"status\">${msg.map(m => `<p>${m}</p>`).join('')}</div>` : ''}\n<p>Cuando descartas una oferta y nos dices por qué, LANOPS aprende para no enseñarte ofertas parecidas:\nsi es por <em>la empresa</em>, dejamos de enseñarte esa empresa; si descartas ${umbral} ofertas del mismo sector por\n<em>el sector</em>, ese sector; con los demás motivos, la IA lee la oferta y puede proponer una regla (una palabra\ndel puesto, un municipio o un tipo de contrato). Todo lo aprendido está aquí y puedes quitarlo.</p>\n\n<h2>Lo que hemos aprendido</h2>\n${aprendidas.length ? `<ul>${aprendidas.map(liAprendida).join('')}</ul>` : '<p>Todavía nada.</p>'}\n${enCamino.length ? `<h2>A punto de aprender</h2><ul>${enCamino.map(liCamino).join('')}</ul>` : ''}\n\n<h2>Ofertas que has descartado</h2>\n${descartes.length ? `<ul class=\"vacs\">${descartes.map(liDescarte).join('')}</ul>` : '<p>No has descartado ninguna oferta.</p>'}\n\n<h2>Tu perfil de búsqueda</h2>\n<p>Lo que nos dijiste al darte de alta. ${esc(CAMBIAR_PERFIL)}</p>\n${perfil.length ? `<ul>${perfil.map(liPerfil).join('')}</ul>` : '<p>No has indicado preferencias.</p>'}\n</main>\n<footer><p>La IA evalúa cada oferta con la rúbrica abierta de career-ops y propone reglas; tú decides y puedes quitarlas.</p></footer>\n</body></html>`;\nreturn [{ json: { html, status: 200 } }];\n"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2368,
-        -96
+        896,
+        96
       ],
-      "id": "4bbca9c7-538a-4f2f-a70d-5e70d4ccf2df",
+      "id": "8d486fdb-81af-4530-b860-ad4354925e54",
       "name": "Code: HTML"
     },
     {
@@ -303,10 +303,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        2592,
-        -96
+        1120,
+        96
       ],
-      "id": "66cd067a-2433-4286-ac53-1519e17f6c3e",
+      "id": "00ef0a6b-50d7-4ecd-be41-42b633160287",
       "name": "Respond to Webhook"
     }
   ],
@@ -459,11 +459,20 @@
       ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate",
-    "saveDataSuccessExecution": "none"
+    "timeSavedMode": "fixed",
+    "saveDataSuccessExecution": "none",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
   },
+  "versionId": "658b6d6d-705a-438f-b0fc-7b6c454bb72e",
+  "meta": {
+    "instanceId": "f542eb0e5dc5c19946d2b8c8bc24a3b9d0a1fe1c48da820339cf1e58a9b75fa6"
+  },
+  "nodeGroups": [],
+  "id": "LT5eNsuaG1rMYvaI",
   "tags": []
 }
