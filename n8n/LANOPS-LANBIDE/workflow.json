@@ -82,7 +82,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "   UPDATE lanops.vacantes\n   SET estado = 'cerrada'\n   WHERE fuente = 'lanbide'\n     AND estado = 'abierta'\n     AND vista_en < CURRENT_DATE\n     AND EXISTS (SELECT 1 FROM lanops.vacantes\n                 WHERE fuente = 'lanbide' AND vista_en = CURRENT_DATE)\n   RETURNING id;",
+        "query": "-- n8n · workflow LANOPS-LANBIDE · nodo \"Postgres: cerrar desaparecidas\"\n-- Operación: Execute Query · Settings: Execute Once = ON\n-- ACTIVO: el JSON trae todas las ofertas gestionadas por Lanbide (5-oct: 700 en el JSON,\n-- 698 en la web con origen \"Lanbide\"). Las de otros orígenes no vienen en el JSON.\n-- Salvaguarda: solo cierra si hoy se vio al menos una vacante de Lanbide\n-- (si el upsert no corrió hoy, no cierra nada).\n-- [12-oct] Además, cada mañana cierra las ofertas PEGADAS (fuente 'usuario') que nadie ha vuelto a pegar en\n-- CONFIGURACION.caducidad_oferta_pegada_dias (30): LANOPS no sabe cuándo deja de estar publicada una oferta\n-- pegada. Volver a pegarla la reabre (LANOPS-PEGAR-OFERTA actualiza vista_en). Un certificado ya emitido\n-- sigue valiendo hasta su propia caducidad. Va en un WITH para que siga siendo una sola sentencia.\nWITH pegadas AS (\n  UPDATE lanops.vacantes\n  SET estado = 'cerrada'\n  WHERE fuente = 'usuario'\n    AND estado = 'abierta'\n    AND coalesce(vista_en, fecha_pub) < now() - make_interval(days => coalesce(\n          (SELECT valor::int FROM lanops.configuracion WHERE clave = 'caducidad_oferta_pegada_dias'), 30))\n  RETURNING id\n)\nUPDATE lanops.vacantes\nSET estado = 'cerrada'\nWHERE fuente = 'lanbide'\n  AND estado = 'abierta'\n  AND vista_en < CURRENT_DATE\n  AND EXISTS (SELECT 1 FROM lanops.vacantes\n              WHERE fuente = 'lanbide' AND vista_en = CURRENT_DATE)\nRETURNING id;\n",
         "options": {}
       },
       "type": "n8n-nodes-base.postgres",
@@ -156,10 +156,9 @@
     "timeSavedMode": "fixed",
     "callerPolicy": "workflowsFromSameOwner",
     "availableInMCP": false,
-    "timezone": "Europe/Madrid",
-    "executionTimeout": -1
+    "timezone": "Europe/Madrid"
   },
-  "versionId": "3c4570a4-34f2-46b1-95bf-437db6773df8",
+  "versionId": "4c01e693-3001-46ce-b406-d00dbdf922e7",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "f542eb0e5dc5c19946d2b8c8bc24a3b9d0a1fe1c48da820339cf1e58a9b75fa6"
