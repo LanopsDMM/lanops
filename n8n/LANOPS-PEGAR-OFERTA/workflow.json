@@ -15,21 +15,21 @@
         0,
         0
       ],
-      "id": "5668732b-c5dc-4c52-9b15-b06aac5d91b7",
+      "id": "a5ee4c20-388a-4566-852d-4a439b474e44",
       "webhookId": "9be9956f-0039-470a-86e3-42423e636a7a"
     },
     {
       "parameters": {
-        "jsCode": "// n8n · workflow LANOPS-PEGAR-OFERTA · nodo \"Code: entrada\"\n// Modo: Run Once for All Items · JavaScript\n// Recibe el formulario de lanops/pegar-oferta/index.html (POST urlencoded en $json.body).\n// Identifica al usuario con su enlace firmado de ENCAJE: u y t, o el enlace entero pegado en \"enlace\".\n// firma = HMAC-SHA256(ENCAJE_SECRET, 'encaje:' + u), el mismo cálculo que LANOPS-ENCAJE/code-firma.js.\nfunction sha256(bytes) {\n  const K = [0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,\n    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,\n    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,\n    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,\n    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,\n    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,\n    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,\n    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];\n  const H = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];\n  const l = bytes.length, n = ((l + 9 + 63) >> 6) << 6, m = new Uint8Array(n);\n  m.set(bytes); m[l] = 0x80;\n  const bits = l * 8;\n  m[n - 4] = (bits >>> 24) & 255; m[n - 3] = (bits >>> 16) & 255; m[n - 2] = (bits >>> 8) & 255; m[n - 1] = bits & 255;\n  m[n - 5] = Math.floor(bits / 2 ** 32) & 255;\n  const w = new Uint32Array(64), r = (x, s) => (x >>> s) | (x << (32 - s));\n  for (let i = 0; i < n; i += 64) {\n    for (let t = 0; t < 16; t++) w[t] = (m[i+4*t] << 24) | (m[i+4*t+1] << 16) | (m[i+4*t+2] << 8) | m[i+4*t+3];\n    for (let t = 16; t < 64; t++) {\n      const s0 = r(w[t-15], 7) ^ r(w[t-15], 18) ^ (w[t-15] >>> 3);\n      const s1 = r(w[t-2], 17) ^ r(w[t-2], 19) ^ (w[t-2] >>> 10);\n      w[t] = (w[t-16] + s0 + w[t-7] + s1) | 0;\n    }\n    let [a, b, c, d, e, f, g, h] = H;\n    for (let t = 0; t < 64; t++) {\n      const t1 = (h + (r(e, 6) ^ r(e, 11) ^ r(e, 25)) + ((e & f) ^ (~e & g)) + K[t] + w[t]) | 0;\n      const t2 = ((r(a, 2) ^ r(a, 13) ^ r(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) | 0;\n      h = g; g = f; f = e; e = (d + t1) | 0; d = c; c = b; b = a; a = (t1 + t2) | 0;\n    }\n    H[0] = (H[0] + a) | 0; H[1] = (H[1] + b) | 0; H[2] = (H[2] + c) | 0; H[3] = (H[3] + d) | 0;\n    H[4] = (H[4] + e) | 0; H[5] = (H[5] + f) | 0; H[6] = (H[6] + g) | 0; H[7] = (H[7] + h) | 0;\n  }\n  const out = new Uint8Array(32);\n  H.forEach((v, i) => { out[4*i] = v >>> 24; out[4*i+1] = (v >>> 16) & 255; out[4*i+2] = (v >>> 8) & 255; out[4*i+3] = v & 255; });\n  return out;\n}\nconst utf8 = (s) => new TextEncoder().encode(s);\nfunction hmacHex(secreto, mensaje) {\n  let k = utf8(secreto);\n  if (k.length > 64) k = sha256(k);\n  const ki = new Uint8Array(64), ko = new Uint8Array(64);\n  for (let i = 0; i < 64; i++) { ki[i] = (k[i] || 0) ^ 0x36; ko[i] = (k[i] || 0) ^ 0x5c; }\n  const m = utf8(mensaje), interior = new Uint8Array(64 + m.length);\n  interior.set(ki); interior.set(m, 64);\n  const ih = sha256(interior), exterior = new Uint8Array(96);\n  exterior.set(ko); exterior.set(ih, 64);\n  return Array.from(sha256(exterior), (x) => x.toString(16).padStart(2, '0')).join('');\n}\n\nconst b = $input.first().json.body || {};\nlet u = String(b.u || '').trim(), t = String(b.t || '').trim();\nif ((!u || !t) && b.enlace) {\n  try {\n    const url = new URL(String(b.enlace).trim());\n    u = url.searchParams.get('u') || ''; t = url.searchParams.get('t') || '';\n  } catch (e) { /* enlace mal pegado: queda inválido */ }\n}\nconst secreto = $env.ENCAJE_SECRET;\nif (!secreto) throw new Error('Falta la variable ENCAJE_SECRET en el servicio n8n');\nconst valido = /^\\d{1,9}$/.test(u) && /^[0-9a-f]{64}$/i.test(t) && t.toLowerCase() === hmacHex(secreto, 'encaje:' + u);\nconst texto = String(b.texto || '').trim().slice(0, 15000);\nconst motivo = !valido ? 'enlace' : texto.length < 200 ? 'texto' : null;\nconst url = /^https?:\\/\\//i.test(String(b.url || '').trim()) ? String(b.url).trim().slice(0, 255) : null;\n\nreturn [{ json: {\n  valido: !motivo, motivo,\n  usuario: valido ? Number(u) : null, t: valido ? t.toLowerCase() : null,\n  texto, empresa_form: String(b.empresa || '').trim().slice(0, 100), url\n} }];\n"
+        "jsCode": "// n8n · workflow LANOPS-PEGAR-OFERTA · nodo \"Code: entrada\"\n// Modo: Run Once for All Items · JavaScript\n// Recibe el formulario de lanops/pegar-oferta/index.html (POST urlencoded en $json.body).\n// Identifica al usuario con su enlace firmado de ENCAJE: u y t, o el enlace entero pegado en \"enlace\".\n// firma = HMAC-SHA256(ENCAJE_SECRET, 'encaje:' + u), el mismo cálculo que LANOPS-ENCAJE/code-firma.js.\nfunction sha256(bytes) {\n  const K = [0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,\n    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,\n    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,\n    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,\n    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,\n    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,\n    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,\n    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];\n  const H = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];\n  const l = bytes.length, n = ((l + 9 + 63) >> 6) << 6, m = new Uint8Array(n);\n  m.set(bytes); m[l] = 0x80;\n  const bits = l * 8;\n  m[n - 4] = (bits >>> 24) & 255; m[n - 3] = (bits >>> 16) & 255; m[n - 2] = (bits >>> 8) & 255; m[n - 1] = bits & 255;\n  m[n - 5] = Math.floor(bits / 2 ** 32) & 255;\n  const w = new Uint32Array(64), r = (x, s) => (x >>> s) | (x << (32 - s));\n  for (let i = 0; i < n; i += 64) {\n    for (let t = 0; t < 16; t++) w[t] = (m[i+4*t] << 24) | (m[i+4*t+1] << 16) | (m[i+4*t+2] << 8) | m[i+4*t+3];\n    for (let t = 16; t < 64; t++) {\n      const s0 = r(w[t-15], 7) ^ r(w[t-15], 18) ^ (w[t-15] >>> 3);\n      const s1 = r(w[t-2], 17) ^ r(w[t-2], 19) ^ (w[t-2] >>> 10);\n      w[t] = (w[t-16] + s0 + w[t-7] + s1) | 0;\n    }\n    let [a, b, c, d, e, f, g, h] = H;\n    for (let t = 0; t < 64; t++) {\n      const t1 = (h + (r(e, 6) ^ r(e, 11) ^ r(e, 25)) + ((e & f) ^ (~e & g)) + K[t] + w[t]) | 0;\n      const t2 = ((r(a, 2) ^ r(a, 13) ^ r(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) | 0;\n      h = g; g = f; f = e; e = (d + t1) | 0; d = c; c = b; b = a; a = (t1 + t2) | 0;\n    }\n    H[0] = (H[0] + a) | 0; H[1] = (H[1] + b) | 0; H[2] = (H[2] + c) | 0; H[3] = (H[3] + d) | 0;\n    H[4] = (H[4] + e) | 0; H[5] = (H[5] + f) | 0; H[6] = (H[6] + g) | 0; H[7] = (H[7] + h) | 0;\n  }\n  const out = new Uint8Array(32);\n  H.forEach((v, i) => { out[4*i] = v >>> 24; out[4*i+1] = (v >>> 16) & 255; out[4*i+2] = (v >>> 8) & 255; out[4*i+3] = v & 255; });\n  return out;\n}\nconst utf8 = (s) => new TextEncoder().encode(s);\nfunction hmacHex(secreto, mensaje) {\n  let k = utf8(secreto);\n  if (k.length > 64) k = sha256(k);\n  const ki = new Uint8Array(64), ko = new Uint8Array(64);\n  for (let i = 0; i < 64; i++) { ki[i] = (k[i] || 0) ^ 0x36; ko[i] = (k[i] || 0) ^ 0x5c; }\n  const m = utf8(mensaje), interior = new Uint8Array(64 + m.length);\n  interior.set(ki); interior.set(m, 64);\n  const ih = sha256(interior), exterior = new Uint8Array(96);\n  exterior.set(ko); exterior.set(ih, 64);\n  return Array.from(sha256(exterior), (x) => x.toString(16).padStart(2, '0')).join('');\n}\n\nconst b = $input.first().json.body || {};\nlet u = String(b.u || '').trim(), t = String(b.t || '').trim();\nif ((!u || !t) && b.enlace) {\n  // [10-oct] Con expresiones regulares: en el Code de n8n no existe URL (new URL fallaba en silencio)\n  const enlace = String(b.enlace).trim();\n  u = (enlace.match(/[?&]u=(\\d{1,9})(?:&|$)/) || [])[1] || '';\n  t = (enlace.match(/[?&]t=([0-9a-fA-F]{64})(?:&|$)/) || [])[1] || '';\n}\nconst secreto = $env.ENCAJE_SECRET;\nif (!secreto) throw new Error('Falta la variable ENCAJE_SECRET en el servicio n8n');\nconst valido = /^\\d{1,9}$/.test(u) && /^[0-9a-f]{64}$/i.test(t) && t.toLowerCase() === hmacHex(secreto, 'encaje:' + u);\nconst texto = String(b.texto || '').trim().slice(0, 15000);\nconst motivo = !valido ? 'enlace' : texto.length < 200 ? 'texto' : null;\nconst url = /^https?:\\/\\//i.test(String(b.url || '').trim()) ? String(b.url).trim().slice(0, 255) : null;\n\nreturn [{ json: {\n  valido: !motivo, motivo,\n  usuario: valido ? Number(u) : null, t: valido ? t.toLowerCase() : null,\n  texto, empresa_form: String(b.empresa || '').trim().slice(0, 100), url\n} }];\n"
       },
       "name": "Code: entrada",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        220,
+        224,
         0
       ],
-      "id": "d0b773e2-b1bf-4294-b513-af0d64155f77"
+      "id": "3377ce9d-2c70-4727-af74-3bc496521614"
     },
     {
       "parameters": {
@@ -60,10 +60,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        440,
+        448,
         0
       ],
-      "id": "ba2b6d01-e2d6-482f-9f0b-88ed5ef192a7"
+      "id": "877bba4a-0233-452d-83b2-a69936bbdbe4"
     },
     {
       "parameters": {
@@ -77,10 +77,16 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.7,
       "position": [
-        660,
+        672,
         0
       ],
-      "id": "6b89f726-3c98-4887-9caa-b8600dac091e"
+      "id": "838f140f-4a76-432d-be2f-4046b5b812c0",
+      "credentials": {
+        "postgres": {
+          "id": "3RgYPRfrWQzGR0wq",
+          "name": "Postgres LANOPS (marcos)"
+        }
+      }
     },
     {
       "parameters": {
@@ -93,7 +99,7 @@
         880,
         0
       ],
-      "id": "53f7a656-d9e7-40ce-b9da-b08a9b466380"
+      "id": "9a57a0bd-743c-41d8-bcae-289647427928"
     },
     {
       "parameters": {
@@ -121,28 +127,34 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        1100,
+        1104,
         0
       ],
-      "id": "768fed85-502e-41f9-abd3-02ccf84b29fe"
+      "id": "a2b8dafc-4e8e-4149-baf6-3e625acd3c12",
+      "credentials": {
+        "anthropicApi": {
+          "id": "T2KmOmjrPgVm2L6I",
+          "name": "Anthropic LANOPS"
+        }
+      }
     },
     {
       "parameters": {
-        "jsCode": "// n8n · workflow LANOPS-PEGAR-OFERTA · nodo \"Code: vacante\"\n// Modo: Run Once for All Items · JavaScript\n// Lee el JSON de la llamada 1 y prepara la fila de VACANTES (fuente 'usuario').\nconst texto = ($input.first().json.content || []).filter(b => b.type === 'text').map(b => b.text).join('');\nconst a = texto.indexOf('{'), z = texto.lastIndexOf('}');\nif (a < 0 || z < a) throw new Error('PEGAR-OFERTA: Claude no ha devuelto JSON. Respuesta: ' + texto.slice(0, 300));\nconst o = JSON.parse(texto.slice(a, z + 1));\nconst e = $('Code: entrada').first().json;\nconst txt = (v, n) => String(v ?? '').trim().slice(0, n);\nconst contrato = ['indefinido', 'temporal', 'practicas', 'otro'].includes(o.contrato) ? o.contrato : null;\nconst jornada = ['completa', 'parcial'].includes(o.jornada) ? o.jornada : null;\nconst salario = parseInt(o.salario_min, 10);\nconst puesto = txt(o.puesto, 150) || 'Puesto sin título';\nreturn [{ json: { datos: {\n  puesto,\n  empresa: txt(e.empresa_form || o.empresa, 100) || 'Empresa no indicada',\n  ubicacion: txt(o.ubicacion, 60) || null,\n  contrato, jornada,\n  salario_min: salario > 0 ? salario : null,\n  requisitos: txt(o.descripcion, 6000) || e.texto.slice(0, 6000),\n  url_origen: e.url\n} } }];\n"
+        "jsCode": "// n8n · workflow LANOPS-PEGAR-OFERTA · nodo \"Code: vacante\"\n// Modo: Run Once for All Items · JavaScript\n// Lee el JSON de la llamada 1 y prepara la fila de VACANTES (fuente 'usuario').\n// [12-oct] Añade texto_pegado (para la huella) y usuario, hash_cv y evaluador\n// (para que \"Postgres: guardar vacante\" diga si este usuario ya tiene evaluada la oferta).\nconst texto = ($input.first().json.content || []).filter(b => b.type === 'text').map(b => b.text).join('');\nconst a = texto.indexOf('{'), z = texto.lastIndexOf('}');\nif (a < 0 || z < a) throw new Error('PEGAR-OFERTA: Claude no ha devuelto JSON. Respuesta: ' + texto.slice(0, 300));\nconst o = JSON.parse(texto.slice(a, z + 1));\nconst e = $('Code: entrada').first().json;\nconst ctx = $('Postgres: contexto').first().json;\nconst txt = (v, n) => String(v ?? '').trim().slice(0, n);\nconst contrato = ['indefinido', 'temporal', 'practicas', 'otro'].includes(o.contrato) ? o.contrato : null;\nconst jornada = ['completa', 'parcial'].includes(o.jornada) ? o.jornada : null;\nconst salario = parseInt(o.salario_min, 10);\nconst puesto = txt(o.puesto, 150) || 'Puesto sin título';\nreturn [{ json: { datos: {\n  puesto,\n  empresa: txt(e.empresa_form || o.empresa, 100) || 'Empresa no indicada',\n  ubicacion: txt(o.ubicacion, 60) || null,\n  contrato, jornada,\n  salario_min: salario > 0 ? salario : null,\n  requisitos: txt(o.descripcion, 6000) || e.texto.slice(0, 6000),\n  url_origen: e.url,\n  texto_pegado: String(e.texto || '').slice(0, 20000),\n  usuario: ctx.usuario,\n  hash_cv: ctx.hash_cv,\n  evaluador: ctx.evaluador\n} } }];\n"
       },
       "name": "Code: vacante",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1320,
+        1328,
         0
       ],
-      "id": "029904a6-61a8-410b-a798-b636cef34dd9"
+      "id": "e80cb8cb-1d9a-4e9d-8686-20327628d2bb"
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "WITH d AS (SELECT $1::jsonb AS j),\nemp_existe AS (\n  SELECT e.id, e.nombre FROM lanops.empresas e, d WHERE lower(e.nombre) = lower(d.j->>'empresa') ORDER BY e.id LIMIT 1\n),\nemp_nueva AS (\n  INSERT INTO lanops.empresas (nombre, ciudad, anillo, tipo_lectura, activa)\n  SELECT d.j->>'empresa', d.j->>'ubicacion', 1, 'manual', true FROM d\n  WHERE NOT EXISTS (SELECT 1 FROM emp_existe)\n  RETURNING id\n),\nemp AS (SELECT id FROM emp_existe UNION ALL SELECT id FROM emp_nueva),\nins AS (\n  INSERT INTO lanops.vacantes (empresa, puesto, requisitos, contrato, jornada, ubicacion, salario_min,\n                               estado, fuente, url_origen, hash, fecha_pub, vista_en)\n  SELECT emp.id, d.j->>'puesto', d.j->>'requisitos', d.j->>'contrato', d.j->>'jornada', d.j->>'ubicacion',\n         (d.j->>'salario_min')::int, 'abierta', 'usuario', d.j->>'url_origen',\n         md5('usuario|' || lower(d.j->>'empresa') || '|' || lower(d.j->>'puesto') || '|' || (d.j->>'requisitos')),\n         now(), now()\n  FROM d, emp\n  ON CONFLICT (hash) DO UPDATE SET vista_en = now(), estado = 'abierta'\n  RETURNING id, puesto, ubicacion, url_origen, contrato, jornada, salario_min, requisitos\n)\nSELECT ins.id AS vacante, ins.puesto, coalesce((SELECT nombre FROM emp_existe), d.j->>'empresa') AS empresa_nombre, ins.ubicacion, ins.url_origen,\n       ins.contrato, ins.jornada, ins.salario_min, ins.requisitos\nFROM ins, d;",
+        "query": "-- n8n · workflow LANOPS-PEGAR-OFERTA · nodo \"Postgres: guardar vacante\"\n-- Execute Query · Query Parameters: {{ [ JSON.stringify($json.datos) ] }}   (sin cambios)\n-- [12-oct] Versión 2.\n--   1. Busca la empresa por nombre (sin mayúsculas); si no existe, la crea (anillo 1, tipo_lectura 'manual').\n--   2. ¿La misma oferta ya está pegada? = vacante 'usuario' abierta, misma empresa, mismo puesto\n--      (sin tildes ni mayúsculas) y mismo enlace sin \"?…\" ni \"#…\" ni \"https://www.\". Si sí, la reutiliza.\n--      Sin enlace no se compara así: una web de empleo con una sola página para todas sus ofertas\n--      mezclaría ofertas distintas.\n--   3. Si no, la inserta. Huella = empresa + texto PEGADO normalizado (no la descripción de Claude,\n--      que cambia en cada llamada): pegar exactamente el mismo texto también reutiliza la vacante.\n--   4. Devuelve la vacante y, si este usuario ya la tiene evaluada con su CV actual y el evaluador\n--      activo, esa evaluación con ya_evaluada = true. El nodo \"IF ya evaluada\" decide si se llama a Claude.\n--   url_origen es varchar(255): si el enlace es más largo, se guarda sin \"?…\".\nWITH d AS (SELECT $1::jsonb AS j),\nk AS (\n  SELECT j,\n         lanops.norm(j->>'puesto') AS puesto_n,\n         nullif(lower(regexp_replace(regexp_replace(\n           split_part(split_part(coalesce(j->>'url_origen', ''), '#', 1), '?', 1),\n           '^https?://(www\\.)?', ''), '/+$', '')), '') AS url_n,\n         md5('usuario|' || coalesce(lanops.norm(j->>'empresa'), '') || '|' ||\n             regexp_replace(coalesce(lanops.norm(coalesce(j->>'texto_pegado', j->>'requisitos')), ''),\n                            '\\s+', ' ', 'g')) AS hash,\n         CASE WHEN length(j->>'url_origen') > 255\n              THEN left(split_part(j->>'url_origen', '?', 1), 255)\n              ELSE nullif(j->>'url_origen', '') END AS url_guardar\n  FROM d\n),\nemp_existe AS (\n  SELECT e.id, e.nombre FROM lanops.empresas e, k WHERE lower(e.nombre) = lower(k.j->>'empresa') ORDER BY e.id LIMIT 1\n),\nemp_nueva AS (\n  INSERT INTO lanops.empresas (nombre, ciudad, anillo, tipo_lectura, activa)\n  SELECT k.j->>'empresa', k.j->>'ubicacion', 1, 'manual', true FROM k\n  WHERE NOT EXISTS (SELECT 1 FROM emp_existe)\n  RETURNING id\n),\nemp AS (SELECT id FROM emp_existe UNION ALL SELECT id FROM emp_nueva),\nprevia AS (\n  SELECT v.id FROM lanops.vacantes v, k, emp\n  WHERE k.url_n IS NOT NULL\n    AND v.fuente = 'usuario' AND v.estado = 'abierta' AND v.empresa = emp.id\n    AND lanops.norm(v.puesto) = k.puesto_n\n    AND lower(regexp_replace(regexp_replace(\n          split_part(split_part(coalesce(v.url_origen, ''), '#', 1), '?', 1),\n          '^https?://(www\\.)?', ''), '/+$', '')) = k.url_n\n  ORDER BY v.id LIMIT 1\n),\nreusa AS (\n  UPDATE lanops.vacantes v SET vista_en = now() FROM previa WHERE v.id = previa.id\n  RETURNING v.id, v.puesto, v.ubicacion, v.url_origen, v.contrato, v.jornada, v.salario_min, v.requisitos\n),\nins AS (\n  INSERT INTO lanops.vacantes (empresa, puesto, requisitos, contrato, jornada, ubicacion, salario_min,\n                               estado, fuente, url_origen, hash, fecha_pub, vista_en)\n  SELECT emp.id, k.j->>'puesto', k.j->>'requisitos', k.j->>'contrato', k.j->>'jornada', k.j->>'ubicacion',\n         (k.j->>'salario_min')::int, 'abierta', 'usuario', k.url_guardar, k.hash, now(), now()\n  FROM k, emp\n  WHERE NOT EXISTS (SELECT 1 FROM previa)\n  ON CONFLICT (hash) DO UPDATE SET vista_en = now(), estado = 'abierta'\n  RETURNING id, puesto, ubicacion, url_origen, contrato, jornada, salario_min, requisitos\n),\nvac AS (SELECT * FROM reusa UNION ALL SELECT * FROM ins)\nSELECT vac.id AS vacante, vac.puesto, coalesce((SELECT nombre FROM emp_existe), k.j->>'empresa') AS empresa_nombre,\n       vac.ubicacion, vac.url_origen, vac.contrato, vac.jornada, vac.salario_min, vac.requisitos,\n       ev.id, ev.global, ev.global_personal, ev.banda, ev.d1_match_cv, ev.d2_north_star, ev.d3_compensacion,\n       ev.d4_cultura, ev.d5_red_flags, ev.explicacion, ev.hueco,\n       (ev.id IS NOT NULL) AS ya_evaluada\nFROM vac CROSS JOIN k\nLEFT JOIN lanops.evaluaciones ev\n       ON ev.vacante = vac.id\n      AND ev.usuario = (k.j->>'usuario')::int\n      AND ev.evaluador = (k.j->>'evaluador')::int\n      AND ev.hash_cv = k.j->>'hash_cv';\n",
         "options": {
           "queryReplacement": "={{ [ JSON.stringify($json.datos) ] }}"
         }
@@ -151,10 +163,16 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.7,
       "position": [
-        1540,
+        1552,
         0
       ],
-      "id": "4883e109-9b8c-4d40-8e4a-12181affb4fe"
+      "id": "1cb4cc58-1b25-424e-8b24-67830ac382d0",
+      "credentials": {
+        "postgres": {
+          "id": "3RgYPRfrWQzGR0wq",
+          "name": "Postgres LANOPS (marcos)"
+        }
+      }
     },
     {
       "parameters": {
@@ -164,10 +182,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1760,
+        1984,
         0
       ],
-      "id": "82d62546-2d47-4d80-b455-2a92a1e7538e"
+      "id": "08c46f9c-c681-4609-a73d-8b63b88ddbbe"
     },
     {
       "parameters": {
@@ -195,10 +213,16 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        1980,
+        2208,
         0
       ],
-      "id": "032e3977-8eee-40df-914b-1d2a3d1566c8"
+      "id": "c3f5d1fe-bee7-4421-86ef-b43e0e3daed1",
+      "credentials": {
+        "anthropicApi": {
+          "id": "T2KmOmjrPgVm2L6I",
+          "name": "Anthropic LANOPS"
+        }
+      }
     },
     {
       "parameters": {
@@ -208,10 +232,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2200,
+        2432,
         0
       ],
-      "id": "9ca2cecf-6fd9-4b77-b72e-5e106cb7d31c"
+      "id": "a023a973-f606-496b-997a-03990f28a8ff"
     },
     {
       "parameters": {
@@ -225,10 +249,16 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.7,
       "position": [
-        2420,
+        2656,
         0
       ],
-      "id": "adc040a3-35eb-47a0-bbf0-9f68168ed606"
+      "id": "df29780c-52fd-4834-905d-c2d55bd79e24",
+      "credentials": {
+        "postgres": {
+          "id": "3RgYPRfrWQzGR0wq",
+          "name": "Postgres LANOPS (marcos)"
+        }
+      }
     },
     {
       "parameters": {
@@ -238,10 +268,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2640,
+        2864,
         0
       ],
-      "id": "a915ccf0-99d0-486e-8ca7-c0909c0665e7"
+      "id": "7e7c6174-8cc1-4c11-8af7-bbd88aad5884"
     },
     {
       "parameters": {
@@ -262,10 +292,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        2860,
+        3088,
         0
       ],
-      "id": "91eb1781-121f-40a4-addd-a08b8acca65b"
+      "id": "5af015c1-e009-480b-af07-40f011e21ee0"
     },
     {
       "parameters": {
@@ -276,15 +306,16 @@
       "typeVersion": 2,
       "position": [
         880,
-        220
+        224
       ],
-      "id": "a5e82d45-3406-47c9-a01b-4adac067b00d"
+      "id": "b7fd25a1-ed49-430f-aa95-cbd34bb14378"
     },
     {
       "parameters": {
         "respondWith": "text",
         "responseBody": "={{ $json.html }}",
         "options": {
+          "responseCode": 400,
           "responseHeaders": {
             "entries": [
               {
@@ -292,20 +323,54 @@
                 "value": "text/html; charset=utf-8"
               }
             ]
-          },
-          "responseCode": 400
+          }
         }
       },
       "name": "Respond error",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        1100,
-        220
+        1104,
+        224
       ],
-      "id": "415fcafe-dae0-4eb2-adec-7d37d2996995"
+      "id": "aa9d5bd2-8af4-4dd5-a325-6391006e2472"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "bd33bbe3-9fe2-47ff-ae7b-aa136b944d96",
+              "leftValue": "={{ $json.ya_evaluada }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1760,
+        -208
+      ],
+      "id": "992f32d8-0e1e-418d-b13d-586e3ae2342c",
+      "name": "IF ya evaluada"
     }
   ],
+  "pinData": {},
   "connections": {
     "Webhook /pegar-oferta": {
       "main": [
@@ -406,7 +471,7 @@
       "main": [
         [
           {
-            "node": "Code: petición evaluar",
+            "node": "IF ya evaluada",
             "type": "main",
             "index": 0
           }
@@ -467,10 +532,36 @@
           }
         ]
       ]
+    },
+    "IF ya evaluada": {
+      "main": [
+        [
+          {
+            "node": "Code: HTML",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code: petición evaluar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
+  "active": true,
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "binaryMode": "separate"
   },
-  "pinData": {}
+  "versionId": "b5f649ff-60bc-4f58-8fb8-df8d2ba7e507",
+  "meta": {
+    "instanceId": "f542eb0e5dc5c19946d2b8c8bc24a3b9d0a1fe1c48da820339cf1e58a9b75fa6"
+  },
+  "nodeGroups": [],
+  "id": "eEUcBy0k2RYVGonK",
+  "tags": []
 }

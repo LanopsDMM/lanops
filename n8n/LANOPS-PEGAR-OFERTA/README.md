@@ -26,7 +26,8 @@ La firma se comprueba igual que en `LANOPS-ENCAJE/code-firma.js`.
 | 5 | `Code: petición extraer` | `code-peticion-extraer.js` | Claude convierte el texto en puesto, empresa, ubicación, contrato, jornada, salario y descripción |
 | 6 | `HTTP Request: Claude extraer` | — | como en ENCAJE (credencial Anthropic, `anthropic-version`, Timeout 120000) |
 | 7 | `Code: vacante` | `code-vacante.js` | fila de VACANTES |
-| 8 | `Postgres: guardar vacante` | `guardar-vacante.sql` | empresa por nombre (o nueva, anillo 1, `tipo_lectura='manual'`) · VACANTES `fuente='usuario'`; misma oferta = mismo `hash` = misma vacante |
+| 8 | `Postgres: guardar vacante` | `guardar-vacante.sql` | empresa por nombre (o nueva, anillo 1, `tipo_lectura='manual'`) · VACANTES `fuente='usuario'` · [12-oct] misma oferta = misma empresa + mismo puesto + mismo enlace sin `?…` (o mismo texto pegado normalizado) → se reutiliza la vacante · devuelve `ya_evaluada` y, si es true, la evaluación previa |
+| 8b | `IF ya evaluada` | — | [12-oct] `{{ $json.ya_evaluada }}` is true → **true: 13 `Code: HTML`** (sin llamar a Claude; aviso "Ya habías pegado esta oferta") · false: 9 |
 | 9 | `Code: petición evaluar` | `code-peticion-evaluar.js` | mismo evaluador, prompt y formato que ENCAJE |
 | 10 | `HTTP Request: Claude evaluar` | — | como el 6 |
 | 11 | `Code: leer evaluación` | `code-leer-evaluacion.js` | como `ENCAJE/code-leer.js` (pesos del usuario, umbrales de banda) |
@@ -38,5 +39,7 @@ La firma se comprueba igual que en `LANOPS-ENCAJE/code-firma.js`.
 
 ## A tener en cuenta
 
-- Una oferta pegada queda en VACANTES como `abierta`, con anillo 1, así que **también aparece en las listas de ENCAJE de los demás usuarios**: "pegar la oferta convierte a todos los portales en fuentes nuestras". Nada la cierra después; el agente solo cierra las suyas.
-- Cada oferta pegada son 2 llamadas a Claude.
+- ~~Una oferta pegada queda en VACANTES como `abierta`, con anillo 1, así que **también aparece en las listas de ENCAJE de los demás usuarios**.~~ [12-oct] **Las ofertas pegadas son privadas**: `LANOPS-ENCAJE/prefiltro.sql` excluye `fuente='usuario'`, así que solo las evalúa (y las ve) quien las pega, como dice la memoria. Motivos: una oferta falsa o inexacta no llega a nadie más y una empresa no puede publicar la suya de forma encubierta. Nada la cierra después (pendiente: caducidad).
+- Cada oferta pegada son 2 llamadas a Claude; [12-oct] si el usuario ya la tenía evaluada con su CV actual, solo 1 (extraer). La extracción no se evita: sin saber la empresa, el enlace solo no basta (una web de empleo puede tener una sola página para todas sus ofertas).
+- `Code: vacante` [12-oct] añade a `datos` `texto_pegado`, `usuario`, `hash_cv` y `evaluador`. La huella usa el texto pegado, no la descripción de Claude, que cambia en cada llamada.
+- `url_origen` es varchar(255): un enlace más largo se guarda sin `?…`.

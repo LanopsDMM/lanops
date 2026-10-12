@@ -25,6 +25,7 @@ WITH u AS (
   FROM lanops.vacantes v JOIN lanops.empresas e ON e.id = v.empresa
   WHERE v.estado = 'abierta'
     AND (NOT $2::boolean OR e.anillo = 1)
+    AND v.fuente IS DISTINCT FROM 'usuario'   -- [12-oct] las ofertas pegadas solo las evalúa quien las pega
 ), filtradas AS (
   SELECT c.* FROM cand c
   WHERE
