@@ -55,6 +55,22 @@ function hmacHex(secreto, mensaje) {
 }
 
 const g = $input.first().json;                       // salida de "Postgres: guardar"
+// [12-oct] El email ya es de otro perfil y no se ha llegado desde su enlace personal: no se ha tocado nada.
+if (g.bloqueado) {
+  return [{ json: { usuario: null, enlace: null, html: `<!doctype html><html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex">
+<title>Este email ya tiene perfil · LANOPS</title>
+<link rel="stylesheet" href="https://lanopsdmm.github.io/lanops/styles.css"></head><body>
+<header><p class="marca">LANOPS</p></header>
+<main>
+<h1>Este email ya tiene un perfil en LANOPS</h1>
+<p role="status">No hemos cambiado nada. Para actualizar tu perfil, abre el alta desde tu enlace personal: en tu lista de ofertas, «Lo que LANOPS ha aprendido de ti» → «tu alta en LANOPS».</p>
+<p>Si has perdido tu enlace personal, escríbenos a <a href="mailto:lanops.gipuzkoa@gmail.com">lanops.gipuzkoa@gmail.com</a> desde ese email y te lo enviamos.</p>
+<p>Lo pedimos así para que nadie pueda cambiar tu perfil sabiendo solo tu email.</p>
+</main>
+<footer><p><a href="https://lanopsdmm.github.io/lanops/">LANOPS</a> · La IA evalúa; tú decides.</p></footer>
+</body></html>` } }];
+}
 const usuario = parseInt(g.usuario, 10);
 if (!usuario) throw new Error('ALTA: no se ha guardado el usuario');
 const secreto = $env.ENCAJE_SECRET;
@@ -76,7 +92,7 @@ ${quedan ? `Puedes recomendar a ${quedan} ${quedan === 1 ? 'persona' : 'personas
 <p><a href="https://lanopsdmm.github.io/lanops/alta/">Enlace para crear perfil</a> · <a href="https://lanopsdmm.github.io/lanops/pegar-oferta/?u=${usuario}&amp;t=${enlace.split('t=')[1]}">Pegar una oferta</a></p>`;
 
 const consejos = huecos.length ? `<h2>Para afinar tu encaje</h2>
-<p>Tu CV no responde a estas preguntas. Si las contestas en tu CV y vuelves a hacer el alta con el mismo email, LANOPS te evaluará mejor:</p>
+<p>Tu CV no responde a estas preguntas. Si las contestas en tu CV y vuelves a hacer el alta (con el enlace del final de esta página), LANOPS te evaluará mejor:</p>
 <ul>${huecos.map(h => `<li>${esc(h)}</li>`).join('')}</ul>` : '';
 
 const html = `<!doctype html><html lang="es"><head><meta charset="utf-8">
@@ -94,7 +110,7 @@ ${g.entidad_encontrada ? '<p class="aviso">Tu email corresponde a una entidad co
 ${avisoCodigo}
 ${consejos}
 ${recomendar}
-<p>Para cambiar tu perfil, vuelve a hacer el alta con el mismo email.</p>
+<p>Para cambiar tu perfil, <a href="https://lanopsdmm.github.io/lanops/alta/?u=${usuario}&amp;t=${enlace.split('t=')[1]}">vuelve a hacer el alta desde aquí</a> con el mismo email.</p>
 </main>
 <footer><p><a href="https://lanopsdmm.github.io/lanops/">LANOPS</a> · La IA evalúa; tú decides.</p></footer>
 </body></html>`;

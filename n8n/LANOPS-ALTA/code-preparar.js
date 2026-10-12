@@ -4,6 +4,9 @@
 // para "Postgres: guardar". Los nombres de campo son los atributos name= de lanops/alta/index.html.
 // [10-oct, LANOPS-INVITAR] Código de recomendación = 'R' + id + '-' + 8 primeros hex de HMAC(ENCAJE_SECRET, 'recomienda:' + id).
 // No se guarda en ninguna tabla: se comprueba recalculando la firma. El cupo se controla en "Postgres: guardar".
+// [12-oct] Editar un perfil que ya existe exige su enlace personal: alta/index.html abierto con ?u=&t= manda u y t;
+// si la firma vale (HMAC(ENCAJE_SECRET, 'encaje:' + u), como LANOPS-ENCAJE/code-firma.js), editor = u.
+// "Postgres: guardar" no toca un perfil existente si editor no es su id.
 function sha256(bytes) {
   const K = [0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
     0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
@@ -101,8 +104,18 @@ if (mc) {
   if (hmacHex(secreto, 'recomienda:' + mc[1]).slice(0, 8).toUpperCase() === mc[2]) recomendado_por = Number(mc[1]);
 }
 
+// [12-oct] Enlace personal (solo para editar un perfil que ya existe)
+let editor = null;
+const ue = String(f.u ?? '').trim(), te = String(f.t ?? '').trim().toLowerCase();
+if (/^\d{1,9}$/.test(ue) && /^[0-9a-f]{64}$/.test(te)) {
+  const secreto = $env.ENCAJE_SECRET;
+  if (!secreto) throw new Error('Falta la variable ENCAJE_SECRET en el servicio n8n');
+  if (hmacHex(secreto, 'encaje:' + ue) === te) editor = Number(ue);
+}
+
 return [{ json: { codigo_dado: !!codigo, datos: {
   recomendado_por,
+  editor,
   nombre: txt(f.nombre, 100) || txt(cv.nombre, 100),
   email,
   ciudad: txt(cv.ciudad, 60),

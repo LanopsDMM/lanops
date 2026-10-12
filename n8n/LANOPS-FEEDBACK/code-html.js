@@ -6,7 +6,7 @@
 // Usa $('Code: entrada'), $('Postgres: aplicar'), $('Postgres: aprender') y, si corrió, $('Code: leer regla'):
 // **los nombres de esos nodos deben ser exactos**. Accesible (decisión 21): HTML semántico, formularios con
 // etiqueta, mensaje en role="status", nada depende solo del color. Sin JavaScript en la página.
-const CAMBIAR_PERFIL = 'Para cambiar algo de aquí, hazlo desde tu alta en LANOPS.';   // [08-oct] depende del alta (Pieza 6)
+// [12-oct] "tu alta en LANOPS" enlaza a alta/?u=&t=: editar un perfil existente exige el enlace personal (LANOPS-ALTA).
 
 const e = $('Code: entrada').first().json;
 const a = $('Postgres: aplicar').first().json || {};
@@ -126,7 +126,7 @@ ${enCamino.length ? `<h2>A punto de aprender</h2><ul>${enCamino.map(liCamino).jo
 ${descartes.length ? `<ul class="vacs">${descartes.map(liDescarte).join('')}</ul>` : '<p>No has descartado ninguna oferta.</p>'}
 
 <h2>Tu perfil de búsqueda</h2>
-<p>Lo que nos dijiste al darte de alta. ${esc(CAMBIAR_PERFIL)}</p>
+<p>Lo que nos dijiste al darte de alta. Para cambiar algo de aquí, hazlo desde <a href="https://lanopsdmm.github.io/lanops/alta/?u=${encodeURIComponent(e.usuario)}&amp;t=${encodeURIComponent(e.t)}">tu alta en LANOPS</a>.</p>
 ${perfil.length ? `<ul>${perfil.map(liPerfil).join('')}</ul>` : '<p>No has indicado preferencias.</p>'}
 </main>
 <footer><p>La IA evalúa cada oferta con la rúbrica abierta de career-ops y propone reglas; tú decides y puedes quitarlas.</p></footer>

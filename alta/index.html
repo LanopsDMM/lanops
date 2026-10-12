@@ -30,6 +30,9 @@
 
   <form id="alta" method="post" enctype="multipart/form-data"
         action="https://n8n-production-3c20b.up.railway.app/webhook/alta">
+    <!-- [12-oct] Enlace personal: solo para editar un perfil que ya existe (alta abierta con ?u=&t=) -->
+    <input type="hidden" name="u" id="u">
+    <input type="hidden" name="t" id="t">
 
     <fieldset>
       <legend>Tú</legend>
@@ -124,6 +127,14 @@
 </footer>
 
 <script>
+  // [12-oct] Si se llega desde el enlace personal (?u=&t=), se envía con el formulario: así se puede editar el perfil.
+  try {
+    const q = new URLSearchParams(location.search);
+    if (/^\d+$/.test(q.get('u') || '') && /^[0-9a-f]{64}$/i.test(q.get('t') || '')) {
+      document.getElementById('u').value = q.get('u');
+      document.getElementById('t').value = q.get('t');
+    }
+  } catch (e) {}
   // Solo avisa de la espera; el envío es un formulario normal (funciona también sin JavaScript)
   document.getElementById('alta').addEventListener('submit', function () {
     document.getElementById('enviando').style.display = 'block';

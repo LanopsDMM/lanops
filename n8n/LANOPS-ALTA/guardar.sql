@@ -7,9 +7,17 @@
 -- Recomendación [10-oct, LANOPS-INVITAR]: si llega recomendado_por (código ya comprobado en "Code: preparar"), se guarda
 --   solo si ese usuario existe, no es la misma persona (otro email) y no ha agotado CONFIGURACION.cupo_recomendaciones.
 --   Un recomendado_por ya guardado no se cambia.
+-- [12-oct] Si el email ya es de un perfil y no llega su enlace personal (datos.editor = su id, firma comprobada en
+--   "Code: preparar"), NO se toca nada y se devuelve bloqueado = true ("Code: enlace" enseña el aviso). Así nadie
+--   puede cambiar el perfil de otro, quedarse con su verificación ni ver su enlace sabiendo solo su email.
 -- Verificación: si el dominio del email institucional (o del email) es el de una ENTIDAD activa,
 --   VERIFICACIONES 'email_institucional' en 'pendiente' y el usuario en 'pendiente' (no hay correo para confirmar).
 WITH d AS (SELECT $1::jsonb AS j),
+bloqueo AS (
+  SELECT x.id FROM lanops.usuarios x, d
+  WHERE lower(x.email) = lower(d.j->>'email')
+    AND x.id IS DISTINCT FROM nullif(d.j->>'editor', '')::int
+),
 ent AS (
   SELECT e.id FROM lanops.entidades e, d
   WHERE e.activa AND e.dominio_email IS NOT NULL AND lower(e.dominio_email) = lower(d.j->>'dominio')
@@ -30,6 +38,7 @@ u AS (
          CASE WHEN EXISTS (SELECT 1 FROM ent) THEN 'pendiente' ELSE 'sin_verificar' END,
          now(), j->>'cv_texto', (SELECT id FROM rec)
   FROM d
+  WHERE NOT EXISTS (SELECT 1 FROM bloqueo)
   ON CONFLICT (email) DO UPDATE SET
     recomendado_por = coalesce(lanops.usuarios.recomendado_por, EXCLUDED.recomendado_por),
     nombre = EXCLUDED.nombre, ciudad = EXCLUDED.ciudad, titulacion = EXCLUDED.titulacion,
@@ -92,5 +101,6 @@ SELECT u.id AS usuario, u.ya_existia,
        (SELECT count(*) FROM ent) > 0 AS entidad_encontrada,
        EXISTS (SELECT 1 FROM rec) AS recomendacion_aceptada,
        (SELECT count(*) FROM lanops.usuarios x WHERE x.recomendado_por = u.id) AS recomendaciones_usadas,
-       (SELECT n FROM cupo) AS cupo_recomendaciones
-FROM u;
+       (SELECT n FROM cupo) AS cupo_recomendaciones,
+       EXISTS (SELECT 1 FROM bloqueo) AS bloqueado
+FROM (SELECT 1) AS uno LEFT JOIN u ON true;
