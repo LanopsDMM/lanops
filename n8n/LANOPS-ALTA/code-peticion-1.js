@@ -2,8 +2,10 @@
 // Modo: Run Once for All Items · JavaScript
 // Prepara la llamada 1 a Claude: estructurar el CV y detectar huecos (prompt en la skill,
 // references/prompts/alta-estructurar.md). El texto del CV viene de "Extract from File: PDF".
+// [12-oct] El mensaje lleva la fecha de hoy: sin ella Claude tomaba fechas recientes por futuras (preguntas absurdas en "huecos").
 const MODELO = 'claude-sonnet-5-5';   // el mismo que el evaluador de ENCAJE
 const texto = String($input.first().json.text || '').trim();
+const HOY = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Madrid' }).format(new Date());   // [12-oct] AAAA-MM-DD, hora de Madrid
 if (texto.length < 200) {
   throw new Error('ALTA: no se ha podido leer texto del PDF (¿es un escaneo?). Sube el CV exportado desde Word o similar.');
 }
@@ -30,6 +32,6 @@ return [{ json: {
     model: MODELO,
     max_tokens: 8000,   // el modelo piensa antes de responder y eso cuenta dentro del límite (decisión 92)
     system: SYSTEM,
-    messages: [{ role: 'user', content: 'CV:\n\n' + texto.slice(0, 30000) }]
+    messages: [{ role: 'user', content: `Fecha de hoy: ${HOY}. Úsala para calcular duraciones: "actual", "hasta hoy" o "presente" en el CV significan hasta esta fecha, y una fecha anterior a hoy no es futura.\n\nCV:\n\n` + texto.slice(0, 30000) }]
   }
 } }];

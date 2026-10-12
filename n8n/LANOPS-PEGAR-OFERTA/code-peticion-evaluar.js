@@ -8,6 +8,8 @@ const v = $input.first().json;                         // "Postgres: guardar vac
 const prefs = ctx.preferencias || [];
 const lineaPref = (p) => `- ${p.tipo} · ${p.clave} = ${p.valor}${p.tipo === 'peso' && p.peso ? ` (peso ${p.peso})` : ''}`;
 const perfil = `<perfil>\n${ctx.cv_texto}\n</perfil>\n\n<preferencias>\n${prefs.map(lineaPref).join('\n') || '(sin preferencias)'}\n</preferencias>`;
+// [12-oct] La fecha va en el bloque de la vacante (no en el prompt ni en el perfil): no cambia version_rubrica ni rompe la caché.
+const HOY = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Madrid' }).format(new Date());   // [12-oct] AAAA-MM-DD, hora de Madrid
 const fmt = (k, x) => (x === null || x === undefined || x === '' ? `${k}: no consta` : `${k}: ${x}`);
 return [{ json: {
   usuario: ctx.usuario, vacante: v.vacante, evaluador: ctx.evaluador, hash_cv: ctx.hash_cv,
@@ -18,6 +20,7 @@ return [{ json: {
     messages: [{ role: 'user', content: [
       { type: 'text', text: perfil },
       { type: 'text', text: [
+        `Fecha de hoy: ${HOY}`,
         '<vacante>',
         fmt('Puesto', v.puesto), fmt('Empresa', v.empresa_nombre), fmt('Ubicación', v.ubicacion),
         fmt('Contrato', v.contrato), fmt('Jornada', v.jornada),

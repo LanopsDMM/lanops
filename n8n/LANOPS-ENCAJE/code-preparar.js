@@ -14,6 +14,8 @@ const perfil = `<perfil>\n${ctx.cv_texto}\n</perfil>\n\n<preferencias>\n${prefs.
 const vacantes = $('Postgres: prefiltro').all().map(i => i.json).filter(v => v.vacante && !v.evaluada);
 // Sin pendientes: un único item marcador; el IF "¿hay pendientes?" lo manda directo a "Postgres: lista".
 if (vacantes.length === 0) return [{ json: { sin_pendientes: true, usuario: ctx.usuario } }];
+// [12-oct] La fecha va en el bloque de la vacante (no en el prompt ni en el perfil): no cambia version_rubrica ni rompe la caché.
+const HOY = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Madrid' }).format(new Date());   // [12-oct] AAAA-MM-DD, hora de Madrid
 const fmt = (k, v) => (v === null || v === undefined || v === '' ? `${k}: no consta` : `${k}: ${v}`);
 
 return vacantes.map(v => ({ json: {
@@ -27,6 +29,7 @@ return vacantes.map(v => ({ json: {
       // Perfil del usuario: igual en todas las vacantes de esta ejecución → segundo punto de caché.
       { type: 'text', text: perfil, cache_control: { type: 'ephemeral' } },
       { type: 'text', text: [
+        `Fecha de hoy: ${HOY}`,
         '<vacante>',
         fmt('Puesto', v.puesto), fmt('Empresa', v.empresa_nombre), fmt('Ubicación', v.ubicacion),
         fmt('Contrato', v.contrato), fmt('Jornada', v.jornada),
